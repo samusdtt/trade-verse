@@ -1,13 +1,38 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
 from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
+import os, uuid
 from ..extensions import db
 from ..models import Post, Category
+from ..config import Config
 
 posts_bp = Blueprint("posts", __name__, template_folder="../templates/posts")
 
 
 def _user_can_edit(post: Post) -> bool:
 	return current_user.is_authenticated and (current_user.is_admin or current_user.id == post.user_id)
+
+
+def _allowed(filename: str, allowed: set) -> bool:
+	return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed
+
+
+def _save_file(file_storage, folder: str) -> str | None:
+	if not file_storage or file_storage.filename == "":
+		return None
+	filename = secure_filename(file_storage.filename)
+	ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+	unique = f"{uuid.uuid4().hex}.{ext}"
+	path = os.path.join(folder, unique)
+	file_storage.save(path)
+	# Return path relative to static for url_for
+	return path.split("/static/")[-1]
+
+
+@posts_bp.route("/<int:post_id>")
+def detail(post_id: int):
+	post = Post.query.get_or_404(post_id)
+	return render_template("posts/detail.html", post=post)
 
 
 @posts_bp.route("/new", methods=["GET", "POST"])
@@ -17,19 +42,40 @@ def create_post():
 	if request.method == "POST":
 		title = request.form.get("title", "").strip()
 		content = request.form.get("content", "").strip()
+		excerpt = request.form.get("excerpt", "").strip()
 		category_id = request.form.get("category_id")
+		thumb_file = request.files.get("thumbnail")
+		pdf_file = request.files.get("pdf")
+
 		if not title or not content or not category_id:
-			flash("Please fill all fields.", "warning")
+			flash("Please fill all required fields.", "warning")
 			return render_template("posts/new.html", categories=categories)
-		category = Category.query.get(int(category_id))
-		if not category:
-			flash("Invalid category.", "danger")
-			return render_template("posts/new.html", categories=categories)
-		post = Post(title=title, content=content, category_id=category.id, user_id=current_user.id)
+
+		thumb_rel = None
+		if thumb_file and _allowed(thumb_file.filename, Config.ALLOWED_IMAGE_EXTENSIONS):
+			thumb_rel = _save_file(thumb_file, Config.UPLOAD_THUMBNAILS)
+		elif thumb_file and thumb_file.filename:
+			flash("Unsupported thumbnail format.", "warning")
+
+		pdf_rel = None
+		if pdf_file and _allowed(pdf_file.filename, Config.ALLOWED_PDF_EXTENSIONS):
+			pdf_rel = _save_file(pdf_file, Config.UPLOAD_PDFS)
+		elif pdf_file and pdf_file.filename:
+			flash("Unsupported PDF format.", "warning")
+
+		post = Post(
+			title=title,
+			content=content,
+			excerpt=excerpt or (content[:280] if content else None),
+			thumbnail_path=thumb_rel,
+			pdf_path=pdf_rel,
+			category_id=int(category_id),
+			user_id=current_user.id,
+		)
 		db.session.add(post)
 		db.session.commit()
 		flash("Post created.", "success")
-		return redirect(url_for("main.index", category=category.name))
+		return redirect(url_for("posts.detail", post_id=post.id))
 	return render_template("posts/new.html", categories=categories)
 
 
@@ -43,14 +89,32 @@ def edit_post(post_id: int):
 	if request.method == "POST":
 		post.title = request.form.get("title", post.title).strip()
 		post.content = request.form.get("content", post.content).strip()
+		post.excerpt = request.form.get("excerpt", post.excerpt).strip()
 		category_id = request.form.get("category_id")
+
+		thumb_file = request.files.get("thumbnail")
+		pdf_file = request.files.get("pdf")
+
 		if category_id:
 			category = Category.query.get(int(category_id))
 			if category:
 				post.category_id = category.id
+
+		if thumb_file and thumb_file.filename:
+			if _allowed(thumb_file.filename, Config.ALLOWED_IMAGE_EXTENSIONS):
+				post.thumbnail_path = _save_file(thumb_file, Config.UPLOAD_THUMBNAILS)
+			else:
+				flash("Unsupported thumbnail format.", "warning")
+
+		if pdf_file and pdf_file.filename:
+			if _allowed(pdf_file.filename, Config.ALLOWED_PDF_EXTENSIONS):
+				post.pdf_path = _save_file(pdf_file, Config.UPLOAD_PDFS)
+			else:
+				flash("Unsupported PDF format.", "warning")
+
 		db.session.commit()
 		flash("Post updated.", "success")
-		return redirect(url_for("main.index"))
+		return redirect(url_for("posts.detail", post_id=post.id))
 	return render_template("posts/edit.html", post=post, categories=categories)
 
 
