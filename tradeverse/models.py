@@ -37,7 +37,11 @@ class User(UserMixin, db.Model):
 class Post(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	title = db.Column(db.String(200), nullable=False)
-	content = db.Column(db.Text, nullable=False)
+	content = db.Column(db.Text, nullable=False)  # HTML allowed
+	excerpt = db.Column(db.String(300), nullable=True)
+	cover_image = db.Column(db.String(512), nullable=True)  # kept for backward-compat
+	thumbnail_path = db.Column(db.String(512), nullable=True)
+	pdf_path = db.Column(db.String(512), nullable=True)
 	created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 	user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 	category_id = db.Column(db.Integer, db.ForeignKey("category.id"), nullable=False)
