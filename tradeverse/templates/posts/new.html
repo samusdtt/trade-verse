@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 <h1 class="h4 mb-3">New Post</h1>
-<form method="post">
+<form method="post" enctype="multipart/form-data">
 	<div class="mb-3">
 		<label class="form-label">Title</label>
 		<input name="title" class="form-control" required>
@@ -16,9 +16,25 @@
 		</select>
 	</div>
 	<div class="mb-3">
-		<label class="form-label">Content</label>
-		<textarea name="content" class="form-control" rows="8" required></textarea>
+		<label class="form-label">Excerpt (optional)</label>
+		<input name="excerpt" class="form-control" maxlength="300" placeholder="Short summary shown on cards">
 	</div>
-	<button class="btn btn-primary">Create</button>
+	<div class="mb-3">
+		<label class="form-label">Content</label>
+		<textarea name="content" class="form-control" rows="10" placeholder="Write your post (rich text coming soon)" required></textarea>
+	</div>
+	<div class="row g-3">
+		<div class="col-md-6">
+			<label class="form-label">Thumbnail (JPG/PNG/WEBP)</label>
+			<input type="file" name="thumbnail" accept="image/*" class="form-control">
+		</div>
+		<div class="col-md-6">
+			<label class="form-label">Attach PDF (optional)</label>
+			<input type="file" name="pdf" accept="application/pdf" class="form-control">
+		</div>
+	</div>
+	<div class="mt-3">
+		<button class="btn btn-primary">Create</button>
+	</div>
 </form>
 {% endblock %}

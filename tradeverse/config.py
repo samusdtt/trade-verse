@@ -17,8 +17,11 @@ class Config:
 	# Uploads (inside static for easy serving)
 	STATIC_ROOT = "/workspace/tradeverse/static"
 	UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", os.path.join(STATIC_ROOT, "uploads"))
+	UPLOAD_THUMBNAILS = os.path.join(UPLOAD_FOLDER, "thumbnails")
+	UPLOAD_PDFS = os.path.join(UPLOAD_FOLDER, "pdfs")
 	MAX_CONTENT_LENGTH = int(os.getenv("MAX_CONTENT_LENGTH", "10000000"))  # 10MB
 	ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+	ALLOWED_PDF_EXTENSIONS = {"pdf"}
 
 	# Mail (optional in dev)
 	MAIL_SERVER = os.getenv("MAIL_SERVER", "localhost")
