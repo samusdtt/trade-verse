@@ -8,8 +8,9 @@
 				<p class="lead text-muted mb-0">Explore backtests, journals, and strategies shared by the TradeVerse community.</p>
 			</div>
 			<div class="col-lg-4">
-				<form class="d-flex" method="get" action="#">
-					<input class="form-control me-2" type="search" placeholder="Search posts" aria-label="Search">
+				<form class="d-flex" method="get" action="{{ url_for('main.index') }}">
+					<input class="form-control me-2" type="search" name="q" value="{{ q or '' }}" placeholder="Search posts" aria-label="Search">
+					{% if selected_category %}<input type="hidden" name="category" value="{{ selected_category }}">{% endif %}
 					<button class="btn btn-primary" type="submit">Search</button>
 				</form>
 			</div>
@@ -18,28 +19,28 @@
 </section>
 
 <div class="mb-3 d-flex flex-wrap gap-2">
-	<span class="badge rounded-pill bg-primary-soft">Backtest</span>
-	<span class="badge rounded-pill bg-primary-soft">Journal</span>
-	<span class="badge rounded-pill bg-primary-soft">Strategy</span>
-	<span class="badge rounded-pill bg-primary-soft">Psychology</span>
-	<span class="badge rounded-pill bg-primary-soft">Education</span>
+	{% for cat in categories %}
+		<a class="badge rounded-pill {% if selected_category==cat.name %}bg-primary{% else %}bg-primary-soft{% endif %} text-decoration-none" href="{{ url_for('main.index', category=cat.name, q=q) }}">{{ cat.name }}</a>
+	{% endfor %}
 </div>
 
 <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3">
-	{% for i in range(9) %}
+	{% for p in posts %}
 	<div class="col">
 		<article class="card h-100 shadow-sm card-hover">
 			<div class="card-body">
 				<div class="d-flex justify-content-between align-items-center mb-1">
-					<span class="badge bg-secondary-subtle text-secondary">Category</span>
-					<small class="text-muted">Today</small>
+					<span class="badge bg-secondary-subtle text-secondary">{{ p.category.name }}</span>
+					<small class="text-muted">{{ p.created_at.strftime('%b %d, %Y') }}</small>
 				</div>
-				<h2 class="h5 card-title">Sample Post {{ i + 1 }}</h2>
-				<p class="card-text text-muted">Clean card layout with concise preview content to match the modern style.</p>
+				<h2 class="h5 card-title">{{ p.title }}</h2>
+				<p class="card-text text-muted">{{ (p.content[:140] ~ '...') if p.content|length>160 else p.content }}</p>
 				<a href="#" class="stretched-link">Read more</a>
 			</div>
 		</article>
 	</div>
+	{% else %}
+	<div class="col"><div class="text-muted">No posts yet.</div></div>
 	{% endfor %}
 </div>
 {% endblock %}
