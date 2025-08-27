@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1 class="h4 mb-3">New Post</h1>
+<form method="post">
+	<div class="mb-3">
+		<label class="form-label">Title</label>
+		<input name="title" class="form-control" required>
+	</div>
+	<div class="mb-3">
+		<label class="form-label">Category</label>
+		<select name="category_id" class="form-select" required>
+			<option value="" disabled selected>Select a category</option>
+			{% for c in categories %}
+			<option value="{{ c.id }}">{{ c.name }}</option>
+			{% endfor %}
+		</select>
+	</div>
+	<div class="mb-3">
+		<label class="form-label">Content</label>
+		<textarea name="content" class="form-control" rows="8" required></textarea>
+	</div>
+	<button class="btn btn-primary">Create</button>
+</form>
+{% endblock %}

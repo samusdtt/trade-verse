@@ -56,3 +56,27 @@ def logout():
 	logout_user()
 	flash("Logged out.", "info")
 	return redirect(url_for("main.index"))
+
+
+@auth_bp.route("/profile", methods=["GET", "POST"])
+@login_required
+def profile():
+	if request.method == "POST":
+		name = request.form.get("name", "").strip()
+		bio = request.form.get("bio", "").strip()
+		email = request.form.get("email", "").strip().lower()
+
+		if email and email != current_user.email:
+			# Ensure email uniqueness
+			if User.query.filter(User.email == email, User.id != current_user.id).first():
+				flash("Email already in use.", "warning")
+				return render_template("auth/profile.html", user=current_user)
+			current_user.email = email
+		if name:
+			current_user.name = name
+		current_user.bio = bio
+		db.session.commit()
+		flash("Profile updated.", "success")
+		return redirect(url_for("auth.profile"))
+
+	return render_template("auth/profile.html", user=current_user)
