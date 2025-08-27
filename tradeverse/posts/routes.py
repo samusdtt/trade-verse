@@ -19,15 +19,33 @@ def _allowed(filename: str, allowed: set) -> bool:
 
 def _save_file(file_storage, folder: str) -> str | None:
 	if not file_storage or file_storage.filename == "":
+		print(f"No file to save")
 		return None
+	
 	filename = secure_filename(file_storage.filename)
 	ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
 	unique = f"{uuid.uuid4().hex}.{ext}"
+	
 	# Save to static folder
 	full_path = os.path.join(Config.STATIC_ROOT, folder, unique)
-	file_storage.save(full_path)
-	# Return relative path for url_for
-	return f"{folder}/{unique}"
+	print(f"Saving file to: {full_path}")
+	
+	try:
+		# Ensure directory exists
+		os.makedirs(os.path.dirname(full_path), exist_ok=True)
+		file_storage.save(full_path)
+		
+		# Verify file was saved
+		if os.path.exists(full_path):
+			print(f"File saved successfully: {full_path}")
+			# Return relative path for url_for
+			return f"{folder}/{unique}"
+		else:
+			print(f"File was not saved: {full_path}")
+			return None
+	except Exception as e:
+		print(f"Error saving file: {e}")
+		return None
 
 
 @posts_bp.post("/upload-image")
@@ -59,10 +77,14 @@ def create_post():
 		pdf_file = request.files.get("pdf")
 
 		# Debug logging
+		print(f"=== POST CREATION DEBUG ===")
+		print(f"Title: {title}")
+		print(f"Category ID: {category_id}")
 		print(f"Thumbnail file: {thumb_file}")
 		if thumb_file:
 			print(f"Thumbnail filename: {thumb_file.filename}")
 			print(f"Thumbnail allowed: {_allowed(thumb_file.filename, Config.ALLOWED_IMAGE_EXTENSIONS)}")
+			print(f"Thumbnail content type: {thumb_file.content_type}")
 
 		if not title or not content or not category_id:
 			flash("Please fill all required fields.", "warning")
@@ -74,6 +96,7 @@ def create_post():
 			print(f"Saved thumbnail to: {thumb_rel}")
 		elif thumb_file and thumb_file.filename:
 			flash("Unsupported thumbnail format.", "warning")
+			print(f"Thumbnail format not allowed: {thumb_file.filename}")
 
 		pdf_rel = None
 		if pdf_file and _allowed(pdf_file.filename, Config.ALLOWED_PDF_EXTENSIONS):
@@ -92,6 +115,7 @@ def create_post():
 		)
 		db.session.add(post)
 		db.session.commit()
+		print(f"Post created with ID: {post.id}")
 		flash("Post created.", "success")
 		return redirect(url_for("posts.detail", post_id=post.id))
 	return render_template("posts/new.html", categories=categories)

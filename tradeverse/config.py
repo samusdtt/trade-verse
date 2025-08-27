@@ -19,8 +19,8 @@ class Config:
 	UPLOAD_FOLDER = "uploads"
 	UPLOAD_THUMBNAILS = "uploads/thumbnails"
 	UPLOAD_PDFS = "uploads/pdfs"
-	MAX_CONTENT_LENGTH = int(os.getenv("MAX_CONTENT_LENGTH", "10000000"))  # 10MB
-	ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+	MAX_CONTENT_LENGTH = int(os.getenv("MAX_CONTENT_LENGTH", "50000000"))  # 50MB
+	ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif"}
 	ALLOWED_PDF_EXTENSIONS = {"pdf"}
 
 	# Mail (optional in dev)
