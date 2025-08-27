@@ -14,6 +14,12 @@ class Config:
 	SQLALCHEMY_DATABASE_URI = DATABASE_URL or f"sqlite:///{SQLITE_PATH}"
 	SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+	# Uploads (inside static for easy serving)
+	STATIC_ROOT = "/workspace/tradeverse/static"
+	UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", os.path.join(STATIC_ROOT, "uploads"))
+	MAX_CONTENT_LENGTH = int(os.getenv("MAX_CONTENT_LENGTH", "10000000"))  # 10MB
+	ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+
 	# Mail (optional in dev)
 	MAIL_SERVER = os.getenv("MAIL_SERVER", "localhost")
 	MAIL_PORT = int(os.getenv("MAIL_PORT", "25"))
