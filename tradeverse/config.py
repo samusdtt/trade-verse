@@ -14,11 +14,11 @@ class Config:
 	SQLALCHEMY_DATABASE_URI = DATABASE_URL or f"sqlite:///{SQLITE_PATH}"
 	SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-	# Uploads (inside static for easy serving)
+	# Uploads (relative to static folder)
 	STATIC_ROOT = "/workspace/tradeverse/static"
-	UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", os.path.join(STATIC_ROOT, "uploads"))
-	UPLOAD_THUMBNAILS = os.path.join(UPLOAD_FOLDER, "thumbnails")
-	UPLOAD_PDFS = os.path.join(UPLOAD_FOLDER, "pdfs")
+	UPLOAD_FOLDER = "uploads"
+	UPLOAD_THUMBNAILS = "uploads/thumbnails"
+	UPLOAD_PDFS = "uploads/pdfs"
 	MAX_CONTENT_LENGTH = int(os.getenv("MAX_CONTENT_LENGTH", "10000000"))  # 10MB
 	ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 	ALLOWED_PDF_EXTENSIONS = {"pdf"}

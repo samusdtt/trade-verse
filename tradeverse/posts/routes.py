@@ -23,10 +23,11 @@ def _save_file(file_storage, folder: str) -> str | None:
 	filename = secure_filename(file_storage.filename)
 	ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
 	unique = f"{uuid.uuid4().hex}.{ext}"
-	path = os.path.join(folder, unique)
-	file_storage.save(path)
-	# Return path relative to static for url_for
-	return path.split("/static/")[-1]
+	# Save to static folder
+	full_path = os.path.join(Config.STATIC_ROOT, folder, unique)
+	file_storage.save(full_path)
+	# Return relative path for url_for
+	return f"{folder}/{unique}"
 
 
 @posts_bp.post("/upload-image")
