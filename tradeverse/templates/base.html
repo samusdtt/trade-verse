@@ -23,11 +23,16 @@
 					<li class="nav-item dropdown">
 						<a class="nav-link dropdown-toggle" href="#" id="categoriesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Categories</a>
 						<ul class="dropdown-menu">
-							<li><a class="dropdown-item" href="#">Backtest</a></li>
-							<li><a class="dropdown-item" href="#">Journal</a></li>
-							<li><a class="dropdown-item" href="#">Strategy</a></li>
-							<li><a class="dropdown-item" href="#">Psychology</a></li>
-							<li><a class="dropdown-item" href="#">Education</a></li>
+							{% for cat in (categories if categories is defined else []) %}
+							<li><a class="dropdown-item" href="{{ url_for('main.index', category=cat.name) }}">{{ cat.name }}</a></li>
+							{% endfor %}
+							{% if categories is not defined %}
+							<li><a class="dropdown-item" href="{{ url_for('main.index', category='Backtest') }}">Backtest</a></li>
+							<li><a class="dropdown-item" href="{{ url_for('main.index', category='Journal') }}">Journal</a></li>
+							<li><a class="dropdown-item" href="{{ url_for('main.index', category='Strategy') }}">Strategy</a></li>
+							<li><a class="dropdown-item" href="{{ url_for('main.index', category='Psychology') }}">Psychology</a></li>
+							<li><a class="dropdown-item" href="{{ url_for('main.index', category='Education') }}">Education</a></li>
+							{% endif %}
 						</ul>
 					</li>
 					<li class="nav-item"><a class="nav-link" href="{{ url_for('main.about') }}">About</a></li>
