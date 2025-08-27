@@ -58,6 +58,12 @@ def create_post():
 		thumb_file = request.files.get("thumbnail")
 		pdf_file = request.files.get("pdf")
 
+		# Debug logging
+		print(f"Thumbnail file: {thumb_file}")
+		if thumb_file:
+			print(f"Thumbnail filename: {thumb_file.filename}")
+			print(f"Thumbnail allowed: {_allowed(thumb_file.filename, Config.ALLOWED_IMAGE_EXTENSIONS)}")
+
 		if not title or not content or not category_id:
 			flash("Please fill all required fields.", "warning")
 			return render_template("posts/new.html", categories=categories)
@@ -65,6 +71,7 @@ def create_post():
 		thumb_rel = None
 		if thumb_file and _allowed(thumb_file.filename, Config.ALLOWED_IMAGE_EXTENSIONS):
 			thumb_rel = _save_file(thumb_file, Config.UPLOAD_THUMBNAILS)
+			print(f"Saved thumbnail to: {thumb_rel}")
 		elif thumb_file and thumb_file.filename:
 			flash("Unsupported thumbnail format.", "warning")
 

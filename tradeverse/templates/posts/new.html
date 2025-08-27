@@ -30,7 +30,7 @@
 	<div class="row g-3">
 		<div class="col-md-6">
 			<label class="form-label">Thumbnail (JPG/PNG/WEBP)</label>
-			<input type="file" name="thumbnail" accept="image/*" class="form-control">
+			<input type="file" name="thumbnail" accept="image/*" class="form-control" id="thumbnailInput">
 		</div>
 		<div class="col-md-6">
 			<label class="form-label">Attach PDF (optional)</label>
@@ -59,6 +59,11 @@
 					['clean']
 				]
 			}
+		});
+
+		// Debug thumbnail selection
+		document.getElementById('thumbnailInput').addEventListener('change', function(e) {
+			console.log('Thumbnail selected:', e.target.files[0]);
 		});
 
 		// Upload images pasted/selected into Quill
