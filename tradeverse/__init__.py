@@ -18,6 +18,7 @@ def create_app() -> Flask:
 	os.makedirs(os.path.join(Config.STATIC_ROOT, Config.UPLOAD_FOLDER), exist_ok=True)
 	os.makedirs(os.path.join(Config.STATIC_ROOT, Config.UPLOAD_THUMBNAILS), exist_ok=True)
 	os.makedirs(os.path.join(Config.STATIC_ROOT, Config.UPLOAD_PDFS), exist_ok=True)
+	os.makedirs(os.path.join(Config.STATIC_ROOT, Config.UPLOAD_CONTENT_IMAGES), exist_ok=True)
 
 	# Extensions
 	db.init_app(app)
