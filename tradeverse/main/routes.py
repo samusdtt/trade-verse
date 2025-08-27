@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request
 from sqlalchemy import or_
+from sqlalchemy.orm import joinedload
 from ..models import Category, Post
 
 main_bp = Blueprint("main", __name__)
@@ -11,7 +12,7 @@ def index():
 	search_query = request.args.get("q", "").strip()
 
 	categories = Category.query.order_by(Category.name.asc()).all()
-	query = Post.query
+	query = Post.query.options(joinedload(Post.category))
 	if selected_category:
 		query = query.join(Category).filter(Category.name == selected_category)
 	if search_query:
