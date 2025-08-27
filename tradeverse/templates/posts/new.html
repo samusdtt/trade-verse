@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 <h1 class="h4 mb-3">New Post</h1>
-<form method="post" enctype="multipart/form-data">
+<form method="post" enctype="multipart/form-data" id="postForm">
 	<div class="mb-3">
 		<label class="form-label">Title</label>
 		<input name="title" class="form-control" required>
@@ -19,9 +19,13 @@
 		<label class="form-label">Excerpt (optional)</label>
 		<input name="excerpt" class="form-control" maxlength="300" placeholder="Short summary shown on cards">
 	</div>
-	<div class="mb-3">
-		<label class="form-label">Content</label>
-		<textarea name="content" class="form-control" rows="10" placeholder="Write your post (rich text coming soon)" required></textarea>
+	<div class="mb-2">
+		<label class="form-label d-flex align-items-center justify-content-between">
+			<span>Content</span>
+			<small class="text-muted">Rich editor: headings, bold, lists, links, quotes, code</small>
+		</label>
+		<div id="editor" style="height: 320px; background: #fff;" class="border rounded"></div>
+		<input type="hidden" name="content" id="contentHtml">
 	</div>
 	<div class="row g-3">
 		<div class="col-md-6">
@@ -37,4 +41,29 @@
 		<button class="btn btn-primary">Create</button>
 	</div>
 </form>
+
+<link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+<script>
+	(function(){
+		var quill = new Quill('#editor', {
+			theme: 'snow',
+			placeholder: 'Write your post here...',
+			modules: {
+				toolbar: [
+					[{ header: [1, 2, 3, false] }],
+					['bold', 'italic', 'underline', 'strike'],
+					[{ 'list': 'ordered'}, { 'list': 'bullet' }],
+					['blockquote', 'code-block'],
+					['link'],
+					['clean']
+				]
+			}
+		});
+		var form = document.getElementById('postForm');
+		form.addEventListener('submit', function(){
+			document.getElementById('contentHtml').value = quill.root.innerHTML;
+		});
+	})();
+</script>
 {% endblock %}
