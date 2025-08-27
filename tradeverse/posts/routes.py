@@ -33,11 +33,17 @@ def _save_file(file_storage, folder: str) -> str | None:
 	try:
 		# Ensure directory exists
 		os.makedirs(os.path.dirname(full_path), exist_ok=True)
+		
+		# Reset file pointer to beginning
+		file_storage.seek(0)
+		
+		# Save the file
 		file_storage.save(full_path)
 		
 		# Verify file was saved
 		if os.path.exists(full_path):
-			print(f"File saved successfully: {full_path}")
+			file_size = os.path.getsize(full_path)
+			print(f"File saved successfully: {full_path} (size: {file_size} bytes)")
 			# Return relative path for url_for
 			return f"{folder}/{unique}"
 		else:
