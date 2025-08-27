@@ -1,3 +1,27 @@
-body { background-color: #f8fafc; }
-.navbar-brand { letter-spacing: 0.2px; }
-.card { border: 1px solid #eef2f7; }
+:root {
+	--tv-bg: #f6f8fb;
+	--tv-card: #ffffff;
+	--tv-border: #e8eef5;
+	--tv-primary: #2c6cff;
+	--tv-primary-soft: #e6efff;
+}
+
+body { background-color: var(--tv-bg); }
+
+.brand-logo { font-size: 1.1rem; }
+
+.btn-primary-soft {
+	background: var(--tv-primary-soft);
+	color: var(--tv-primary);
+	border: 1px solid #d5e4ff;
+}
+
+.bg-gradient-light { background: linear-gradient(180deg, #ffffff, #f6f8fb); }
+
+.card { border: 1px solid var(--tv-border); border-radius: 12px; }
+.card-hover { transition: transform .12s ease, box-shadow .12s ease; }
+.card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.06); }
+
+.badge.bg-primary-soft { background: var(--tv-primary-soft); color: var(--tv-primary); border: 1px solid #d5e4ff; }
+
+.shadow-xs { box-shadow: 0 2px 12px rgba(0,0,0,.04); }
