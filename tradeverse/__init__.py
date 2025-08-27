@@ -14,10 +14,10 @@ def create_app() -> Flask:
 	# Config
 	app.config.from_object(Config())
 
-	# Ensure upload dirs
-	os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
-	os.makedirs(Config.UPLOAD_THUMBNAILS, exist_ok=True)
-	os.makedirs(Config.UPLOAD_PDFS, exist_ok=True)
+	# Ensure upload dirs (relative to static)
+	os.makedirs(os.path.join(Config.STATIC_ROOT, Config.UPLOAD_FOLDER), exist_ok=True)
+	os.makedirs(os.path.join(Config.STATIC_ROOT, Config.UPLOAD_THUMBNAILS), exist_ok=True)
+	os.makedirs(os.path.join(Config.STATIC_ROOT, Config.UPLOAD_PDFS), exist_ok=True)
 
 	# Extensions
 	db.init_app(app)
