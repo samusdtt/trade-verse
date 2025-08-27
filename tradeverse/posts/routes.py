@@ -60,7 +60,7 @@ def upload_image():
 	file = request.files.get("image")
 	if not file or not _allowed(file.filename, Config.ALLOWED_IMAGE_EXTENSIONS):
 		return jsonify({"error": "Invalid image"}), 400
-	rel_path = _save_file(file, Config.UPLOAD_FOLDER)
+	rel_path = _save_file(file, Config.UPLOAD_CONTENT_IMAGES)
 	return jsonify({"url": url_for('static', filename=rel_path, _external=False)})
 
 
