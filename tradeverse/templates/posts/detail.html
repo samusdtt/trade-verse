@@ -2,12 +2,22 @@
 {% block content %}
 <article class="post-detail">
 	<header class="mb-3">
-		<h1 class="h3 mb-2">{{ post.title }}</h1>
-		<div class="text-muted small">{{ post.category.name }} • {{ post.created_at.strftime('%b %d, %Y') }}</div>
+		<div class="d-flex justify-content-between align-items-start">
+			<div>
+				<h1 class="h3 mb-2">{{ post.title }}</h1>
+				<div class="text-muted small">{{ post.category.name }} • {{ post.created_at.strftime('%b %d, %Y') }}</div>
+			</div>
+			{% if current_user.is_authenticated and (current_user.is_admin or current_user.id == post.user_id) %}
+			<div class="btn-group">
+				<a href="{{ url_for('posts.edit_post', post_id=post.id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+				<button type="button" class="btn btn-sm btn-outline-danger" onclick="deletePost()">Delete</button>
+			</div>
+			{% endif %}
+		</div>
 	</header>
 	{% if post.thumbnail_path %}
 	<div class="mb-3">
-		<img src="{{ url_for('static', filename=post.thumbnail_path) }}" class="img-fluid rounded" alt="thumbnail">
+		<img src="{{ url_for('static', filename=post.thumbnail_path) }}" class="img-fluid rounded" alt="thumbnail" onerror="this.style.display='none'">
 	</div>
 	{% endif %}
 	<div class="content lead">
@@ -19,4 +29,15 @@
 	</div>
 	{% endif %}
 </article>
+
+{% if current_user.is_authenticated and (current_user.is_admin or current_user.id == post.user_id) %}
+<form id="deleteForm" method="post" action="{{ url_for('posts.delete_post', post_id=post.id) }}" style="display:none;"></form>
+<script>
+function deletePost() {
+	if(confirm('Are you sure you want to delete this post?')) {
+		document.getElementById('deleteForm').submit();
+	}
+}
+</script>
+{% endif %}
 {% endblock %}
