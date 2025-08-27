@@ -29,7 +29,12 @@
 	<div class="col">
 		<article class="card h-100 shadow-sm card-hover">
 			{% if p.thumbnail_path %}
-			<img src="{{ url_for('static', filename=p.thumbnail_path) }}" class="card-thumb" alt="thumbnail">
+			<img src="{{ url_for('static', filename=p.thumbnail_path) }}" class="card-thumb" alt="thumbnail" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+			{% endif %}
+			{% if not p.thumbnail_path or p.thumbnail_path is none %}
+			<div class="default-thumb">
+				<span>📊</span>
+			</div>
 			{% endif %}
 			<div class="card-body">
 				<div class="d-flex justify-content-between align-items-center mb-1">
@@ -38,6 +43,12 @@
 				</div>
 				<h2 class="h5 card-title"><a class="stretched-link text-decoration-none" href="{{ url_for('posts.detail', post_id=p.id) }}">{{ p.title }}</a></h2>
 				<p class="card-text text-muted">{{ p.excerpt or (p.content[:140] ~ '...') }}</p>
+				{% if current_user.is_authenticated and (current_user.is_admin or current_user.id == p.user_id) %}
+				<div class="mt-2">
+					<a href="{{ url_for('posts.edit_post', post_id=p.id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+					<button type="button" class="btn btn-sm btn-outline-danger" onclick="deletePost({{ p.id }})">Delete</button>
+				</div>
+				{% endif %}
 			</div>
 		</article>
 	</div>
@@ -45,4 +56,16 @@
 	<div class="col"><div class="text-muted">No posts yet.</div></div>
 	{% endfor %}
 </div>
+
+<script>
+function deletePost(postId) {
+	if(confirm('Are you sure you want to delete this post?')) {
+		var form = document.createElement('form');
+		form.method = 'POST';
+		form.action = '/posts/' + postId + '/delete';
+		document.body.appendChild(form);
+		form.submit();
+	}
+}
+</script>
 {% endblock %}
