@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
+<article class="post-detail">
+	<header class="mb-3">
+		<h1 class="h3 mb-2">{{ post.title }}</h1>
+		<div class="text-muted small">{{ post.category.name }} • {{ post.created_at.strftime('%b %d, %Y') }}</div>
+	</header>
+	{% if post.thumbnail_path %}
+	<div class="mb-3">
+		<img src="{{ url_for('static', filename=post.thumbnail_path) }}" class="img-fluid rounded" alt="thumbnail">
+	</div>
+	{% endif %}
+	<div class="content lead">
+		{{ post.content|safe|embed_youtube }}
+	</div>
+	{% if post.pdf_path %}
+	<div class="mt-4">
+		<a class="btn btn-outline-primary" href="{{ url_for('static', filename=post.pdf_path) }}" target="_blank">Download PDF</a>
+	</div>
+	{% endif %}
+</article>
+{% endblock %}

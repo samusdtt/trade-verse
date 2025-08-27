@@ -29,6 +29,12 @@ def _save_file(file_storage, folder: str) -> str | None:
 	return path.split("/static/")[-1]
 
 
+@posts_bp.route("/<int:post_id>")
+def detail(post_id: int):
+	post = Post.query.get_or_404(post_id)
+	return render_template("posts/detail.html", post=post)
+
+
 @posts_bp.route("/new", methods=["GET", "POST"])
 @login_required
 def create_post():
@@ -69,7 +75,7 @@ def create_post():
 		db.session.add(post)
 		db.session.commit()
 		flash("Post created.", "success")
-		return redirect(url_for("main.index"))
+		return redirect(url_for("posts.detail", post_id=post.id))
 	return render_template("posts/new.html", categories=categories)
 
 
@@ -108,7 +114,7 @@ def edit_post(post_id: int):
 
 		db.session.commit()
 		flash("Post updated.", "success")
-		return redirect(url_for("main.index"))
+		return redirect(url_for("posts.detail", post_id=post.id))
 	return render_template("posts/edit.html", post=post, categories=categories)
 
 
