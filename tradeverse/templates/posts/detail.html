@@ -17,7 +17,14 @@
 	</header>
 	{% if post.thumbnail_path %}
 	<div class="mb-3">
-		<img src="{{ url_for('static', filename=post.thumbnail_path) }}" class="img-fluid rounded" alt="thumbnail" onerror="this.style.display='none'">
+		<img src="{{ url_for('static', filename=post.thumbnail_path) }}" class="img-fluid rounded" alt="thumbnail" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+	</div>
+	{% endif %}
+	{% if not post.thumbnail_path or post.thumbnail_path is none %}
+	<div class="mb-3">
+		<div class="default-thumb rounded" style="height: 300px; font-size: 4rem;">
+			<span>📊</span>
+		</div>
 	</div>
 	{% endif %}
 	<div class="content lead">

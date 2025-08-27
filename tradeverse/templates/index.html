@@ -29,7 +29,12 @@
 	<div class="col">
 		<article class="card h-100 shadow-sm card-hover">
 			{% if p.thumbnail_path %}
-			<img src="{{ url_for('static', filename=p.thumbnail_path) }}" class="card-thumb" alt="thumbnail" onerror="this.style.display='none'">
+			<img src="{{ url_for('static', filename=p.thumbnail_path) }}" class="card-thumb" alt="thumbnail" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+			{% endif %}
+			{% if not p.thumbnail_path or p.thumbnail_path is none %}
+			<div class="default-thumb">
+				<span>📊</span>
+			</div>
 			{% endif %}
 			<div class="card-body">
 				<div class="d-flex justify-content-between align-items-center mb-1">
