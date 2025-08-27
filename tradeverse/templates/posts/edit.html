@@ -31,7 +31,7 @@
 			<label class="form-label">Thumbnail (JPG/PNG/WEBP)</label>
 			<input type="file" name="thumbnail" accept="image/*" class="form-control">
 			{% if post.thumbnail_path %}
-			<small class="text-muted">Current: <img src="{{ url_for('static', filename=post.thumbnail_path) }}" alt="thumb" class="img-thumbnail mt-2" style="max-height:80px"></small>
+			<small class="text-muted">Current: <img src="{{ url_for('static', filename=post.thumbnail_path) }}" alt="thumb" class="img-thumbnail mt-2" style="max-height:80px" onerror="this.style.display='none'"></small>
 			{% endif %}
 		</div>
 		<div class="col-md-6">
@@ -59,12 +59,36 @@
 					['bold', 'italic', 'underline', 'strike'],
 					[{ 'list': 'ordered'}, { 'list': 'bullet' }],
 					['blockquote', 'code-block'],
-					['link'],
+					['link', 'image'],
 					['clean']
 				]
 			}
 		});
 		quill.root.innerHTML = {{ post.content|tojson|safe }};
+
+		// Upload images pasted/selected into Quill
+		function uploadImage(file) {
+			var formData = new FormData();
+			formData.append('image', file);
+			return fetch("{{ url_for('posts.upload_image') }}", { method: 'POST', body: formData })
+				.then(r => r.json());
+		}
+		quill.getModule('toolbar').addHandler('image', function() {
+			var input = document.createElement('input');
+			input.type = 'file';
+			input.accept = 'image/*';
+			input.onchange = function() {
+				var file = input.files[0];
+				uploadImage(file).then(function(res){
+					if(res && res.url){
+						var range = quill.getSelection(true);
+						quill.insertEmbed(range.index, 'image', res.url, 'user');
+					}
+				});
+			};
+			input.click();
+		});
+
 		var form = document.getElementById('postForm');
 		form.addEventListener('submit', function(){
 			document.getElementById('contentHtml').value = quill.root.innerHTML;
