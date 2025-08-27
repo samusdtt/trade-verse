@@ -11,7 +11,7 @@
 	</div>
 	{% endif %}
 	<div class="content lead">
-		{{ post.content|safe|embed_youtube }}
+		{{ post.content|embed_youtube|safe }}
 	</div>
 	{% if post.pdf_path %}
 	<div class="mt-4">

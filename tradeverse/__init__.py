@@ -2,6 +2,7 @@ import os
 import re
 from flask import Flask
 from markupsafe import Markup
+from sqlalchemy import text
 from .config import Config
 from .extensions import db, login_manager
 from .models import User, Category
@@ -47,14 +48,33 @@ def create_app() -> Flask:
 	app.register_blueprint(auth_bp, url_prefix="/auth")
 	app.register_blueprint(posts_bp, url_prefix="/posts")
 
-	# Create tables in dev mode and seed categories
+	# Create tables and auto-migrate SQLite columns if missing
 	with app.app_context():
+		# Ensure DB file exists for sqlite
 		os.makedirs(os.path.dirname(Config.SQLITE_PATH), exist_ok=True) if Config.SQLALCHEMY_DATABASE_URI.startswith("sqlite") else None
 		db.create_all()
+
+		# Seed default categories
 		default_categories = ["Backtest", "Journal", "Strategy", "Psychology", "Education"]
 		for cat_name in default_categories:
 			if not Category.query.filter_by(name=cat_name).first():
 				db.session.add(Category(name=cat_name))
 		db.session.commit()
+
+		# Lightweight auto-migration for SQLite (adds columns if missing)
+		engine_name = db.engine.url.get_backend_name()
+		if engine_name == "sqlite":
+			with db.engine.connect() as conn:
+				cols = conn.execute(text("PRAGMA table_info(post);")).fetchall()
+				existing = {row[1] for row in cols}  # row[1] is column name
+				needed = {
+					"excerpt": "VARCHAR(300)",
+					"cover_image": "VARCHAR(512)",
+					"thumbnail_path": "VARCHAR(512)",
+					"pdf_path": "VARCHAR(512)",
+				}
+				for col, decl in needed.items():
+					if col not in existing:
+						conn.execute(text(f"ALTER TABLE post ADD COLUMN {col} {decl}"))
 
 	return app

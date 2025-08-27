@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 <h1 class="h4 mb-3">Edit Post</h1>
-<form method="post" enctype="multipart/form-data">
+<form method="post" enctype="multipart/form-data" id="postForm">
 	<div class="mb-3">
 		<label class="form-label">Title</label>
 		<input name="title" class="form-control" value="{{ post.title }}" required>
@@ -18,9 +18,13 @@
 		<label class="form-label">Excerpt (optional)</label>
 		<input name="excerpt" class="form-control" maxlength="300" value="{{ post.excerpt or '' }}">
 	</div>
-	<div class="mb-3">
-		<label class="form-label">Content</label>
-		<textarea name="content" class="form-control" rows="10" required>{{ post.content }}</textarea>
+	<div class="mb-2">
+		<label class="form-label d-flex align-items-center justify-content-between">
+			<span>Content</span>
+			<small class="text-muted">Rich editor</small>
+		</label>
+		<div id="editor" style="height: 320px; background: #fff;" class="border rounded"></div>
+		<input type="hidden" name="content" id="contentHtml">
 	</div>
 	<div class="row g-3">
 		<div class="col-md-6">
@@ -42,4 +46,29 @@
 		<button class="btn btn-primary">Save</button>
 	</div>
 </form>
+
+<link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+<script>
+	(function(){
+		var quill = new Quill('#editor', {
+			theme: 'snow',
+			modules: {
+				toolbar: [
+					[{ header: [1, 2, 3, false] }],
+					['bold', 'italic', 'underline', 'strike'],
+					[{ 'list': 'ordered'}, { 'list': 'bullet' }],
+					['blockquote', 'code-block'],
+					['link'],
+					['clean']
+				]
+			}
+		});
+		quill.root.innerHTML = {{ post.content|tojson|safe }};
+		var form = document.getElementById('postForm');
+		form.addEventListener('submit', function(){
+			document.getElementById('contentHtml').value = quill.root.innerHTML;
+		});
+	})();
+</script>
 {% endblock %}
