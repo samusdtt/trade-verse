@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, jsonify
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 import os, uuid
@@ -27,6 +27,16 @@ def _save_file(file_storage, folder: str) -> str | None:
 	file_storage.save(path)
 	# Return path relative to static for url_for
 	return path.split("/static/")[-1]
+
+
+@posts_bp.post("/upload-image")
+@login_required
+def upload_image():
+	file = request.files.get("image")
+	if not file or not _allowed(file.filename, Config.ALLOWED_IMAGE_EXTENSIONS):
+		return jsonify({"error": "Invalid image"}), 400
+	rel_path = _save_file(file, Config.UPLOAD_FOLDER)
+	return jsonify({"url": url_for('static', filename=rel_path, _external=False)})
 
 
 @posts_bp.route("/<int:post_id>")

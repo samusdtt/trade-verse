@@ -55,11 +55,35 @@
 					['bold', 'italic', 'underline', 'strike'],
 					[{ 'list': 'ordered'}, { 'list': 'bullet' }],
 					['blockquote', 'code-block'],
-					['link'],
+					['link', 'image'],
 					['clean']
 				]
 			}
 		});
+
+		// Upload images pasted/selected into Quill
+		function uploadImage(file) {
+			var formData = new FormData();
+			formData.append('image', file);
+			return fetch("{{ url_for('posts.upload_image') }}", { method: 'POST', body: formData })
+				.then(r => r.json());
+		}
+		quill.getModule('toolbar').addHandler('image', function() {
+			var input = document.createElement('input');
+			input.type = 'file';
+			input.accept = 'image/*';
+			input.onchange = function() {
+				var file = input.files[0];
+				uploadImage(file).then(function(res){
+					if(res && res.url){
+						var range = quill.getSelection(true);
+						quill.insertEmbed(range.index, 'image', res.url, 'user');
+					}
+				});
+			};
+			input.click();
+		});
+
 		var form = document.getElementById('postForm');
 		form.addEventListener('submit', function(){
 			document.getElementById('contentHtml').value = quill.root.innerHTML;
