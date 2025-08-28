@@ -1,11 +1,12 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, jsonify
 from flask_login import login_required, current_user
 from ..extensions import db
-from ..models import Post, Category, Comment, Like, Bookmark, Follow, User, PostTemplate
+from ..models import Post, Category, Comment, Like, Bookmark, Follow, User, PostTemplate, UserActivity
 import os
 import uuid
 from werkzeug.utils import secure_filename
 from datetime import datetime
+from sqlalchemy import func
 
 posts_bp = Blueprint("posts", __name__, template_folder="../templates/posts")
 
@@ -168,6 +169,80 @@ def use_template(template_id):
 		categories=Category.query.all(),
 		template=template
 	)
+
+
+@posts_bp.route("/analytics")
+@login_required
+def analytics():
+	# Get user's posts
+	user_posts = Post.query.filter_by(user_id=current_user.id).all()
+	
+	# Calculate totals
+	total_posts = len(user_posts)
+	total_views = sum(post.views_count for post in user_posts)
+	total_likes = sum(post.likes_count for post in user_posts)
+	total_comments = sum(len(post.comments) for post in user_posts)
+	
+	# Top performing posts (by views)
+	top_posts = Post.query.filter_by(user_id=current_user.id).order_by(Post.views_count.desc()).limit(10).all()
+	
+	# Category statistics
+	category_stats = db.session.query(
+		Category.name.label('category_name'),
+		func.count(Post.id).label('post_count')
+	).join(Post).filter(Post.user_id == current_user.id).group_by(Category.name).all()
+	
+			return render_template("posts/analytics.html",
+		total_posts=total_posts,
+		total_views=total_views,
+		total_likes=total_likes,
+		total_comments=total_comments,
+		top_posts=top_posts,
+		category_stats=category_stats
+	)
+
+
+@posts_bp.route("/activity")
+@login_required
+def activity_feed():
+	# Get activities from followed users and own activities
+	followed_users = db.session.query(Follow.followed_id).filter(Follow.follower_id == current_user.id).subquery()
+	
+	activities = UserActivity.query.filter(
+		(UserActivity.user_id == current_user.id) | 
+		(UserActivity.user_id.in_(followed_users))
+	).order_by(UserActivity.created_at.desc()).limit(50).all()
+	
+	return render_template("posts/activity.html", activities=activities)
+
+
+@posts_bp.route("/recommendations")
+@login_required
+def recommendations():
+	# Get user's liked posts to understand preferences
+	liked_posts = db.session.query(Like.post_id).filter(Like.user_id == current_user.id).subquery()
+	
+	# Get posts from categories user has liked
+	user_categories = db.session.query(Post.category_id).join(Like).filter(Like.user_id == current_user.id).distinct().subquery()
+	
+	# Get recommended posts (same categories, not already liked, not own posts)
+	recommended_posts = Post.query.filter(
+		Post.category_id.in_(user_categories),
+		Post.id.notin_(liked_posts),
+		Post.user_id != current_user.id,
+		Post.status == "published"
+	).order_by(Post.views_count.desc(), Post.created_at.desc()).limit(12).all()
+	
+	# If not enough recommendations, add popular posts
+	if len(recommended_posts) < 6:
+		popular_posts = Post.query.filter(
+			Post.id.notin_([p.id for p in recommended_posts]),
+			Post.user_id != current_user.id,
+			Post.status == "published"
+		).order_by(Post.views_count.desc()).limit(6 - len(recommended_posts)).all()
+		recommended_posts.extend(popular_posts)
+	
+	return render_template("posts/recommendations.html", posts=recommended_posts)
 
 
 @posts_bp.route("/<int:post_id>")
@@ -347,7 +422,7 @@ def delete_comment(comment_id):
 	
 	# Check if user can delete this comment
 	if comment.user_id != current_user.id and not current_user.is_admin:
-		flash("You can only delete your own comments.", "danger")
+		flash("You don't have permission to delete this comment.", "danger")
 		return redirect(url_for("posts.detail", post_id=comment.post_id))
 	
 	post_id = comment.post_id
@@ -399,7 +474,7 @@ def bookmark_post(post_id):
 	post = Post.query.get_or_404(post_id)
 	
 	# Check if already bookmarked
-	existing_bookmark = Bookmark.query.filter_by(user_id=current_user.id, post_id=post_id).first()
+	existing_bookmark = Bookmark.query.filter_by(user_id=current_user.id, post_id=post_id)
 	
 	if existing_bookmark:
 		# Remove bookmark
