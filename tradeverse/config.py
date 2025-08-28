@@ -11,6 +11,9 @@ class Config:
 	# Database
 	SQLITE_PATH = os.getenv("SQLITE_PATH", "/workspace/tradeverse.db")
 	DATABASE_URL = os.getenv("DATABASE_URL")
+	# Convert postgresql:// to postgresql+psycopg:// for psycopg3
+	if DATABASE_URL and DATABASE_URL.startswith('postgresql://'):
+		DATABASE_URL = DATABASE_URL.replace('postgresql://', 'postgresql+psycopg://')
 	SQLALCHEMY_DATABASE_URI = DATABASE_URL or f"sqlite:///{SQLITE_PATH}"
 	SQLALCHEMY_TRACK_MODIFICATIONS = False
 
