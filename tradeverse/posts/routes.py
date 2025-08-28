@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, jsonify, current_app
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 import os, uuid
@@ -26,8 +26,9 @@ def _save_file(file_storage, folder: str) -> str | None:
 	ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
 	unique = f"{uuid.uuid4().hex}.{ext}"
 	
-	# Save to static folder
-	full_path = os.path.join(Config.STATIC_ROOT, folder, unique)
+	# Use Flask's static folder for portability
+	static_root = current_app.static_folder
+	full_path = os.path.join(static_root, folder, unique)
 	print(f"Saving file to: {full_path}")
 	
 	try:
@@ -44,7 +45,7 @@ def _save_file(file_storage, folder: str) -> str | None:
 		if os.path.exists(full_path):
 			file_size = os.path.getsize(full_path)
 			print(f"File saved successfully: {full_path} (size: {file_size} bytes)")
-			# Return relative path for url_for
+			# Return relative path for url_for('static', filename=...)
 			return f"{folder}/{unique}"
 		else:
 			print(f"File was not saved: {full_path}")
