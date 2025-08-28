@@ -1,7 +1,11 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from ..extensions import db
 from ..models import User
+from flask_mail import Message
+from .. import mail
+import secrets
+import string
 
 auth_bp = Blueprint("auth", __name__, template_folder="../templates/auth")
 
@@ -80,3 +84,51 @@ def profile():
 		return redirect(url_for("auth.profile"))
 
 	return render_template("auth/profile.html", user=current_user)
+
+
+@auth_bp.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+	if request.method == "POST":
+		email = request.form.get("email", "").strip().lower()
+		
+		if not email:
+			flash("Please enter your email address.", "danger")
+			return render_template("auth/forgot_password.html")
+		
+		user = User.query.filter_by(email=email).first()
+		if user:
+			# Generate a random password
+			alphabet = string.ascii_letters + string.digits
+			new_password = ''.join(secrets.choice(alphabet) for i in range(12))
+			user.set_password(new_password)
+			db.session.commit()
+			
+			# Send email with new password
+			try:
+				msg = Message(
+					"Password Reset - TradeVerse",
+					sender=current_app.config['MAIL_DEFAULT_SENDER'],
+					recipients=[email]
+				)
+				msg.body = f"""
+Hello {user.name or user.username},
+
+Your password has been reset.
+
+New Password: {new_password}
+
+Please log in with this password and change it immediately.
+
+Best regards,
+TradeVerse Team
+"""
+				mail.send(msg)
+				flash("New password sent to your email. Please check your inbox.", "success")
+			except Exception as e:
+				flash("Password reset failed. Please try again or contact support.", "danger")
+		else:
+			flash("Email not found.", "warning")
+		
+		return render_template("auth/forgot_password.html")
+	
+	return render_template("auth/forgot_password.html")

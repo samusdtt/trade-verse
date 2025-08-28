@@ -4,7 +4,7 @@ from flask import Flask
 from markupsafe import Markup
 from sqlalchemy import text
 from .config import Config
-from .extensions import db, login_manager
+from .extensions import db, login_manager, mail
 from .models import User, Category
 
 
@@ -22,6 +22,7 @@ def create_app() -> Flask:
 	login_manager.init_app(app)
 	login_manager.login_view = "auth.login"
 	login_manager.login_message_category = "info"
+	mail.init_app(app)
 
 	@login_manager.user_loader
 	def load_user(user_id: str):
