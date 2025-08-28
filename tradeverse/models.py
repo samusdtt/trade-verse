@@ -21,6 +21,8 @@ class User(UserMixin, db.Model):
 	password_hash = db.Column(db.String(255), nullable=False)
 	bio = db.Column(db.Text, nullable=True)
 	is_admin = db.Column(db.Boolean, default=False)
+	email_verified = db.Column(db.Boolean, default=False)
+	email_verification_token = db.Column(db.String(100), nullable=True)
 	created_at = db.Column(db.DateTime, default=datetime.utcnow)
 	posts = db.relationship("Post", backref="author", lazy=True)
 
