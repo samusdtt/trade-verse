@@ -13,6 +13,22 @@ class Category(db.Model):
 		return f"<Category {self.name}>"
 
 
+class PostTemplate(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	name = db.Column(db.String(100), nullable=False)
+	description = db.Column(db.Text, nullable=True)
+	title_template = db.Column(db.String(200), nullable=True)
+	content_template = db.Column(db.Text, nullable=True)
+	category_id = db.Column(db.Integer, db.ForeignKey("category.id"), nullable=True)
+	tags_template = db.Column(db.String(500), nullable=True)
+	created_by = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+	is_public = db.Column(db.Boolean, default=False)  # Public templates for all users
+	created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+	def __repr__(self) -> str:
+		return f"<PostTemplate {self.name}>"
+
+
 class User(UserMixin, db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	username = db.Column(db.String(80), unique=True, nullable=False)
@@ -25,6 +41,7 @@ class User(UserMixin, db.Model):
 	email_verification_token = db.Column(db.String(100), nullable=True)
 	badges = db.Column(db.String(500), nullable=True)  # Comma-separated badges
 	post_count = db.Column(db.Integer, default=0)
+	achievement_points = db.Column(db.Integer, default=0)
 	created_at = db.Column(db.DateTime, default=datetime.utcnow)
 	posts = db.relationship("Post", backref="author", lazy=True)
 	
@@ -50,8 +67,11 @@ class Post(db.Model):
 	pdf_path = db.Column(db.String(512), nullable=True)
 	status = db.Column(db.String(20), default="published")  # draft, published, scheduled
 	likes_count = db.Column(db.Integer, default=0)
+	scheduled_at = db.Column(db.DateTime, nullable=True)  # For scheduled posts
 	views_count = db.Column(db.Integer, default=0)
 	tags = db.Column(db.String(500), nullable=True)  # Comma-separated tags
+	series_name = db.Column(db.String(100), nullable=True)  # For post series
+	series_order = db.Column(db.Integer, nullable=True)  # Order in series
 	created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 	user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 	category_id = db.Column(db.Integer, db.ForeignKey("category.id"), nullable=False)

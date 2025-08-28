@@ -42,6 +42,7 @@
 				<ul class="navbar-nav ms-auto">
 					{% if current_user.is_authenticated %}
 					<li class="nav-item me-1"><a class="btn btn-sm btn-primary-soft" href="{{ url_for('posts.new_post') }}">New Post</a></li>
+					<li class="nav-item me-1"><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('posts.templates') }}">Templates</a></li>
 					<li class="nav-item me-1"><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('auth.dashboard') }}">Dashboard</a></li>
 					<li class="nav-item me-1"><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('auth.profile') }}">Profile</a></li>
 					<li class="nav-item"><a class="btn btn-sm btn-outline-danger" href="{{ url_for('auth.logout') }}">Logout</a></li>
