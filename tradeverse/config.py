@@ -9,22 +9,14 @@ class Config:
 	SECURITY_PASSWORD_SALT = os.getenv("SECURITY_PASSWORD_SALT", "dev-salt")
 
 	# Database
-	SQLITE_PATH = os.getenv("SQLITE_PATH", "/workspace/tradeverse.db")
+	SQLITE_PATH = os.getenv("SQLITE_PATH", "/tmp/tradeverse.db")
 	DATABASE_URL = os.getenv("DATABASE_URL")
-	# Database - use PostgreSQL if available, fallback to SQLite
+	# Database - FORCE PostgreSQL for no data loss
 	if DATABASE_URL and DATABASE_URL.startswith('postgresql://'):
-		# Try to use psycopg2, if not available, use psycopg
-		try:
-			import psycopg2
-			SQLALCHEMY_DATABASE_URI = DATABASE_URL.replace('postgresql://', 'postgresql+psycopg2://')
-		except ImportError:
-			try:
-				import psycopg
-				SQLALCHEMY_DATABASE_URI = DATABASE_URL.replace('postgresql://', 'postgresql+psycopg://')
-			except ImportError:
-				# Fallback to SQLite if neither is available
-				SQLALCHEMY_DATABASE_URI = f"sqlite:///{SQLITE_PATH}"
+		# Force PostgreSQL - if it fails, the app should fail rather than lose data
+		SQLALCHEMY_DATABASE_URI = DATABASE_URL.replace('postgresql://', 'postgresql+psycopg2://')
 	else:
+		# Only use SQLite if no DATABASE_URL is provided (development)
 		SQLALCHEMY_DATABASE_URI = f"sqlite:///{SQLITE_PATH}"
 	SQLALCHEMY_TRACK_MODIFICATIONS = False
 
