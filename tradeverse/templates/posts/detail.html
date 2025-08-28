@@ -60,6 +60,27 @@
 				<i class="bi bi-bookmark"></i> 
 				<span id="bookmarkText">{% if current_user.id in post.bookmarks|map(attribute='user_id')|list %}Remove{% else %}Bookmark{% endif %}</span>
 			</button>
+			
+			<div class="dropdown d-inline-block">
+				<button class="btn btn-outline-success btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+					<i class="bi bi-list-ul"></i> Add to List
+				</button>
+				<ul class="dropdown-menu">
+					{% for reading_list in current_user.reading_lists %}
+					<li>
+						<form method="POST" action="{{ url_for('posts.add_to_reading_list', list_id=reading_list.id, post_id=post.id) }}" style="display: inline;">
+							<button type="submit" class="dropdown-item">
+								{{ reading_list.name }}
+							</button>
+						</form>
+					</li>
+					{% endfor %}
+					{% if current_user.reading_lists %}
+					<li><hr class="dropdown-divider"></li>
+					{% endif %}
+					<li><a class="dropdown-item" href="{{ url_for('posts.new_reading_list') }}">Create New List</a></li>
+				</ul>
+			</div>
 
 			{% if current_user.id != post.author.id %}
 			<button class="btn btn-outline-info btn-sm" onclick="followUser({{ post.author.id }})" id="followBtn">
@@ -74,6 +95,14 @@
 	{% if post.pdf_path %}
 	<div class="mt-4">
 		<a class="btn btn-outline-primary" href="{{ url_for('static', filename=post.pdf_path) }}" target="_blank">Download PDF</a>
+	</div>
+	{% endif %}
+	
+	{% if current_user.is_authenticated and (current_user.is_admin or current_user.id == post.user_id) %}
+	<div class="mt-4">
+		<a href="{{ url_for('posts.export_post', post_id=post.id) }}" class="btn btn-outline-success">
+			<i class="bi bi-download"></i> Export Post
+		</a>
 	</div>
 	{% endif %}
 </article>

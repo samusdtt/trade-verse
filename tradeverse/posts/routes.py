@@ -1,7 +1,7 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, jsonify, send_file
 from flask_login import login_required, current_user
 from ..extensions import db
-from ..models import Post, Category, Comment, Like, Bookmark, Follow, User, PostTemplate, UserActivity
+from ..models import Post, Category, Comment, Like, Bookmark, Follow, User, PostTemplate, UserActivity, ReadingList, ReadingListPost
 import os
 import uuid
 from werkzeug.utils import secure_filename
@@ -243,6 +243,226 @@ def recommendations():
 		recommended_posts.extend(popular_posts)
 	
 	return render_template("posts/recommendations.html", posts=recommended_posts)
+
+
+@posts_bp.route("/<int:post_id>/export")
+@login_required
+def export_post(post_id):
+	post = Post.query.get_or_404(post_id)
+	return render_template("posts/export.html", post=post)
+
+
+@posts_bp.route("/<int:post_id>/export/html")
+@login_required
+def export_html(post_id):
+	post = Post.query.get_or_404(post_id)
+	
+	# Generate HTML content
+	html_content = f"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{post.title} - {current_app.config['APP_NAME']}</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }}
+        h1 {{ color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }}
+        .meta {{ color: #666; font-size: 14px; margin-bottom: 20px; }}
+        .content {{ margin-top: 30px; }}
+        img {{ max-width: 100%; height: auto; }}
+        blockquote {{ border-left: 4px solid #007bff; padding-left: 15px; margin: 20px 0; font-style: italic; }}
+        code {{ background: #f4f4f4; padding: 2px 4px; border-radius: 3px; }}
+        pre {{ background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }}
+    </style>
+</head>
+<body>
+    <h1>{post.title}</h1>
+    <div class="meta">
+        <strong>Author:</strong> {post.author.name or post.author.username}<br>
+        <strong>Published:</strong> {post.created_at.strftime('%B %d, %Y')}<br>
+        <strong>Category:</strong> {post.category.name}<br>
+        <strong>Reading Time:</strong> {post.reading_time} minutes
+    </div>
+    {f'<p class="lead">{post.excerpt}</p>' if post.excerpt else ''}
+    <div class="content">
+        {post.content}
+    </div>
+    <hr>
+    <p><em>Exported from {current_app.config['APP_NAME']} on {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</em></p>
+</body>
+</html>
+	"""
+	
+	# Create temporary file
+	import tempfile
+	with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False) as f:
+		f.write(html_content)
+		temp_path = f.name
+	
+	return send_file(temp_path, as_attachment=True, download_name=f"{post.title.replace(' ', '_')}.html")
+
+
+@posts_bp.route("/<int:post_id>/export/pdf")
+@login_required
+def export_pdf(post_id):
+	post = Post.query.get_or_404(post_id)
+	
+	# Generate PDF using weasyprint (if available) or fallback to HTML
+	try:
+		from weasyprint import HTML, CSS
+		from weasyprint.text.fonts import FontConfiguration
+		
+		# Generate HTML content for PDF
+		html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{post.title}</title>
+    <style>
+        @page {{ margin: 2cm; }}
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; }}
+        h1 {{ color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }}
+        .meta {{ color: #666; font-size: 14px; margin-bottom: 20px; }}
+        .content {{ margin-top: 30px; }}
+        img {{ max-width: 100%; height: auto; }}
+        blockquote {{ border-left: 4px solid #007bff; padding-left: 15px; margin: 20px 0; font-style: italic; }}
+        code {{ background: #f4f4f4; padding: 2px 4px; border-radius: 3px; }}
+        pre {{ background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }}
+    </style>
+</head>
+<body>
+    <h1>{post.title}</h1>
+    <div class="meta">
+        <strong>Author:</strong> {post.author.name or post.author.username}<br>
+        <strong>Published:</strong> {post.created_at.strftime('%B %d, %Y')}<br>
+        <strong>Category:</strong> {post.category.name}<br>
+        <strong>Reading Time:</strong> {post.reading_time} minutes
+    </div>
+    {f'<p class="lead">{post.excerpt}</p>' if post.excerpt else ''}
+    <div class="content">
+        {post.content}
+    </div>
+    <hr>
+    <p><em>Exported from {current_app.config['APP_NAME']} on {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</em></p>
+</body>
+</html>
+		"""
+		
+		# Create PDF
+		font_config = FontConfiguration()
+		html_doc = HTML(string=html_content)
+		css = CSS(string='', font_config=font_config)
+		
+		# Create temporary file
+		import tempfile
+		with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as f:
+			html_doc.write_pdf(f.name, stylesheets=[css], font_config=font_config)
+			temp_path = f.name
+		
+		return send_file(temp_path, as_attachment=True, download_name=f"{post.title.replace(' ', '_')}.pdf")
+		
+	except ImportError:
+		# Fallback to HTML if weasyprint not available
+		flash("PDF export requires weasyprint. Installing HTML version instead.", "warning")
+		return redirect(url_for('posts.export_html', post_id=post_id))
+
+
+@posts_bp.route("/reading-lists")
+@login_required
+def reading_lists():
+	# Get user's reading lists and public lists
+	user_lists = ReadingList.query.filter_by(created_by=current_user.id).order_by(ReadingList.created_at.desc()).all()
+	public_lists = ReadingList.query.filter_by(is_public=True).filter(ReadingList.created_by != current_user.id).order_by(ReadingList.created_at.desc()).limit(10).all()
+	
+	return render_template("posts/reading_lists.html", user_lists=user_lists, public_lists=public_lists)
+
+
+@posts_bp.route("/reading-lists/new", methods=["GET", "POST"])
+@login_required
+def new_reading_list():
+	if request.method == "POST":
+		name = request.form.get("name", "").strip()
+		description = request.form.get("description", "").strip()
+		is_public = request.form.get("is_public") == "on"
+		
+		if not name:
+			flash("Reading list name is required.", "danger")
+			return render_template("posts/new_reading_list.html")
+		
+		reading_list = ReadingList(
+			name=name,
+			description=description,
+			is_public=is_public,
+			created_by=current_user.id
+		)
+		db.session.add(reading_list)
+		db.session.commit()
+		
+		flash("Reading list created successfully!", "success")
+		return redirect(url_for("posts.reading_lists"))
+	
+	return render_template("posts/new_reading_list.html")
+
+
+@posts_bp.route("/reading-lists/<int:list_id>")
+@login_required
+def reading_list_detail(list_id):
+	reading_list = ReadingList.query.get_or_404(list_id)
+	
+	# Check if user can view this list
+	if not reading_list.is_public and reading_list.created_by != current_user.id:
+		flash("You don't have permission to view this reading list.", "danger")
+		return redirect(url_for("posts.reading_lists"))
+	
+	return render_template("posts/reading_list_detail.html", reading_list=reading_list)
+
+
+@posts_bp.route("/reading-lists/<int:list_id>/add/<int:post_id>", methods=["POST"])
+@login_required
+def add_to_reading_list(list_id, post_id):
+	reading_list = ReadingList.query.get_or_404(list_id)
+	post = Post.query.get_or_404(post_id)
+	
+	# Check if user can modify this list
+	if reading_list.created_by != current_user.id:
+		flash("You can only add posts to your own reading lists.", "danger")
+		return redirect(url_for("posts.detail", post_id=post_id))
+	
+	# Check if post is already in list
+	existing = ReadingListPost.query.filter_by(reading_list_id=list_id, post_id=post_id).first()
+	if existing:
+		flash("Post is already in this reading list.", "info")
+		return redirect(url_for("posts.detail", post_id=post_id))
+	
+	# Add post to list
+	reading_list_post = ReadingListPost(reading_list_id=list_id, post_id=post_id)
+	db.session.add(reading_list_post)
+	db.session.commit()
+	
+	flash("Post added to reading list!", "success")
+	return redirect(url_for("posts.detail", post_id=post_id))
+
+
+@posts_bp.route("/reading-lists/<int:list_id>/remove/<int:post_id>", methods=["POST"])
+@login_required
+def remove_from_reading_list(list_id, post_id):
+	reading_list = ReadingList.query.get_or_404(list_id)
+	
+	# Check if user can modify this list
+	if reading_list.created_by != current_user.id:
+		flash("You can only modify your own reading lists.", "danger")
+		return redirect(url_for("posts.reading_list_detail", list_id=list_id))
+	
+	# Remove post from list
+	reading_list_post = ReadingListPost.query.filter_by(reading_list_id=list_id, post_id=post_id).first()
+	if reading_list_post:
+		db.session.delete(reading_list_post)
+		db.session.commit()
+		flash("Post removed from reading list!", "success")
+	
+	return redirect(url_for("posts.reading_list_detail", list_id=list_id))
 
 
 @posts_bp.route("/<int:post_id>")

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Reading Lists - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+	<div class="d-flex justify-content-between align-items-center mb-4">
+		<h2>Reading Lists</h2>
+		<a href="{{ url_for('posts.new_reading_list') }}" class="btn btn-primary">
+			<i class="bi bi-plus-circle"></i> Create List
+		</a>
+	</div>
+
+	<!-- User's Reading Lists -->
+	<div class="mb-5">
+		<h4>My Reading Lists</h4>
+		{% if user_lists %}
+		<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+			{% for reading_list in user_lists %}
+			<div class="col">
+				<div class="card h-100">
+					<div class="card-body">
+						<div class="d-flex justify-content-between align-items-start mb-2">
+							<h5 class="card-title">{{ reading_list.name }}</h5>
+							{% if reading_list.is_public %}
+							<span class="badge bg-success">Public</span>
+							{% else %}
+							<span class="badge bg-secondary">Private</span>
+							{% endif %}
+						</div>
+						
+						{% if reading_list.description %}
+						<p class="card-text text-muted">{{ reading_list.description }}</p>
+						{% endif %}
+						
+						<div class="d-flex justify-content-between align-items-center">
+							<small class="text-muted">{{ reading_list.posts|length }} posts</small>
+							<small class="text-muted">{{ reading_list.created_at.strftime('%b %d, %Y') }}</small>
+						</div>
+					</div>
+					<div class="card-footer bg-transparent">
+						<a href="{{ url_for('posts.reading_list_detail', list_id=reading_list.id) }}" class="btn btn-primary btn-sm">
+							View List
+						</a>
+					</div>
+				</div>
+			</div>
+			{% endfor %}
+		</div>
+		{% else %}
+		<div class="text-center py-4">
+			<i class="bi bi-list-ul display-1 text-muted"></i>
+			<h5 class="mt-3">No Reading Lists Yet</h5>
+			<p class="text-muted">Create your first reading list to organize posts you want to read later.</p>
+			<a href="{{ url_for('posts.new_reading_list') }}" class="btn btn-primary">Create Your First List</a>
+		</div>
+		{% endif %}
+	</div>
+
+	<!-- Public Reading Lists -->
+	{% if public_lists %}
+	<div class="mb-5">
+		<h4>Public Reading Lists</h4>
+		<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+			{% for reading_list in public_lists %}
+			<div class="col">
+				<div class="card h-100">
+					<div class="card-body">
+						<div class="d-flex justify-content-between align-items-start mb-2">
+							<h5 class="card-title">{{ reading_list.name }}</h5>
+							<span class="badge bg-success">Public</span>
+						</div>
+						
+						{% if reading_list.description %}
+						<p class="card-text text-muted">{{ reading_list.description }}</p>
+						{% endif %}
+						
+						<div class="d-flex justify-content-between align-items-center">
+							<small class="text-muted">{{ reading_list.posts|length }} posts</small>
+							<small class="text-muted">by {{ reading_list.user.name or reading_list.user.username }}</small>
+						</div>
+					</div>
+					<div class="card-footer bg-transparent">
+						<a href="{{ url_for('posts.reading_list_detail', list_id=reading_list.id) }}" class="btn btn-outline-primary btn-sm">
+							View List
+						</a>
+					</div>
+				</div>
+			</div>
+			{% endfor %}
+		</div>
+	</div>
+	{% endif %}
+</div>
+{% endblock %}
