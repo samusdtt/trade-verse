@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from ..extensions import db
-from ..models import User
+from ..models import User, Post, Bookmark
 from flask_mail import Message
 from .. import mail
 import secrets
@@ -117,6 +117,28 @@ def profile():
 		return redirect(url_for("auth.profile"))
 
 	return render_template("auth/profile.html", user=current_user)
+
+
+@auth_bp.route("/dashboard")
+@login_required
+def dashboard():
+	# Get user's posts (published and drafts)
+	posts = Post.query.filter_by(user_id=current_user.id).order_by(Post.created_at.desc()).all()
+	
+	# Get user's bookmarks
+	bookmarks = Bookmark.query.filter_by(user_id=current_user.id).order_by(Bookmark.created_at.desc()).all()
+	bookmarked_posts = [bookmark.post for bookmark in bookmarks if bookmark.post]
+	
+	# Get user's followers and following
+	followers = current_user.followers.all()
+	following = current_user.following.all()
+	
+	return render_template("auth/dashboard.html", 
+		posts=posts, 
+		bookmarked_posts=bookmarked_posts,
+		followers=followers,
+		following=following
+	)
 
 
 @auth_bp.route("/change-password", methods=["GET", "POST"])

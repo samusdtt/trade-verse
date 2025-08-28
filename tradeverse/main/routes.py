@@ -12,7 +12,11 @@ def index():
 	search_query = request.args.get("q", "").strip()
 
 	categories = Category.query.order_by(Category.name.asc()).all()
-	query = Post.query.options(joinedload(Post.category))
+	query = Post.query.options(joinedload(Post.category), joinedload(Post.author))
+	
+	# Only show published posts
+	query = query.filter(Post.status == "published")
+	
 	if selected_category:
 		query = query.join(Category).filter(Category.name == selected_category)
 	if search_query:
