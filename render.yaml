@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: tradeverse
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn run:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
+      - key: SECRET_KEY
+        generateValue: true
+      - key: SECURITY_PASSWORD_SALT
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tradeverse-db
+          property: connectionString
+      - key: MAIL_SERVER
+        value: smtp.gmail.com
+      - key: MAIL_PORT
+        value: 587
+      - key: MAIL_USE_TLS
+        value: true
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_DEFAULT_SENDER
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: MAX_CONTENT_LENGTH
+        value: 50000000
+
+databases:
+  - name: tradeverse-db
+    databaseName: tradeverse
+    user: tradeverse
