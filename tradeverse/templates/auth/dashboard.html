@@ -32,6 +32,10 @@
 							<div class="fw-bold">{{ following|length }}</div>
 							<small class="text-muted">Following</small>
 						</div>
+						<div>
+							<div class="fw-bold">{{ posts|selectattr('status', 'equalto', 'published')|sum(attribute='views_count') }}</div>
+							<small class="text-muted">Total Views</small>
+						</div>
 					</div>
 				</div>
 			</div>
