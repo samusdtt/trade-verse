@@ -11,10 +11,21 @@ class Config:
 	# Database
 	SQLITE_PATH = os.getenv("SQLITE_PATH", "/workspace/tradeverse.db")
 	DATABASE_URL = os.getenv("DATABASE_URL")
-	# Convert postgresql:// to postgresql+psycopg:// for psycopg3
+	# Database - use PostgreSQL if available, fallback to SQLite
 	if DATABASE_URL and DATABASE_URL.startswith('postgresql://'):
-		DATABASE_URL = DATABASE_URL.replace('postgresql://', 'postgresql+psycopg://')
-	SQLALCHEMY_DATABASE_URI = DATABASE_URL or f"sqlite:///{SQLITE_PATH}"
+		# Try to use psycopg2, if not available, use psycopg
+		try:
+			import psycopg2
+			SQLALCHEMY_DATABASE_URI = DATABASE_URL.replace('postgresql://', 'postgresql+psycopg2://')
+		except ImportError:
+			try:
+				import psycopg
+				SQLALCHEMY_DATABASE_URI = DATABASE_URL.replace('postgresql://', 'postgresql+psycopg://')
+			except ImportError:
+				# Fallback to SQLite if neither is available
+				SQLALCHEMY_DATABASE_URI = f"sqlite:///{SQLITE_PATH}"
+	else:
+		SQLALCHEMY_DATABASE_URI = f"sqlite:///{SQLITE_PATH}"
 	SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 	# Uploads (relative paths under app.static_folder)
