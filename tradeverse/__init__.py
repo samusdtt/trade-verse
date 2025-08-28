@@ -10,15 +10,12 @@ from .models import User, Category
 
 def create_app() -> Flask:
 	app = Flask(__name__, template_folder="templates", static_folder="static")
-
-	# Config
 	app.config.from_object(Config())
 
-	# Ensure upload dirs (relative to static)
-	os.makedirs(os.path.join(Config.STATIC_ROOT, Config.UPLOAD_FOLDER), exist_ok=True)
-	os.makedirs(os.path.join(Config.STATIC_ROOT, Config.UPLOAD_THUMBNAILS), exist_ok=True)
-	os.makedirs(os.path.join(Config.STATIC_ROOT, Config.UPLOAD_PDFS), exist_ok=True)
-	os.makedirs(os.path.join(Config.STATIC_ROOT, Config.UPLOAD_CONTENT_IMAGES), exist_ok=True)
+	# Create upload dirs under the app's static folder (portable)
+	static_root = app.static_folder
+	for rel in (Config.UPLOAD_FOLDER, Config.UPLOAD_THUMBNAILS, Config.UPLOAD_PDFS, Config.UPLOAD_CONTENT_IMAGES):
+		os.makedirs(os.path.join(static_root, rel), exist_ok=True)
 
 	# Extensions
 	db.init_app(app)
@@ -51,23 +48,21 @@ def create_app() -> Flask:
 
 	# Create tables and auto-migrate SQLite columns if missing
 	with app.app_context():
-		# Ensure DB file exists for sqlite
-		os.makedirs(os.path.dirname(Config.SQLITE_PATH), exist_ok=True) if Config.SQLALCHEMY_DATABASE_URI.startswith("sqlite") else None
+		if Config.SQLALCHEMY_DATABASE_URI.startswith("sqlite"):
+			os.makedirs(os.path.dirname(Config.SQLITE_PATH), exist_ok=True)
 		db.create_all()
 
-		# Seed default categories
 		default_categories = ["Backtest", "Journal", "Strategy", "Psychology", "Education"]
 		for cat_name in default_categories:
 			if not Category.query.filter_by(name=cat_name).first():
 				db.session.add(Category(name=cat_name))
 		db.session.commit()
 
-		# Lightweight auto-migration for SQLite (adds columns if missing)
 		engine_name = db.engine.url.get_backend_name()
 		if engine_name == "sqlite":
 			with db.engine.connect() as conn:
 				cols = conn.execute(text("PRAGMA table_info(post);")).fetchall()
-				existing = {row[1] for row in cols}  # row[1] is column name
+				existing = {row[1] for row in cols}
 				needed = {
 					"excerpt": "VARCHAR(300)",
 					"cover_image": "VARCHAR(512)",
