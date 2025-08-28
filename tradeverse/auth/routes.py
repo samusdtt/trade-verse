@@ -119,6 +119,38 @@ def profile():
 	return render_template("auth/profile.html", user=current_user)
 
 
+@auth_bp.route("/change-password", methods=["GET", "POST"])
+@login_required
+def change_password():
+	if request.method == "POST":
+		current_password = request.form.get("current_password", "")
+		new_password = request.form.get("new_password", "")
+		confirm_password = request.form.get("confirm_password", "")
+
+		if not current_password or not new_password or not confirm_password:
+			flash("Please fill all fields.", "danger")
+			return render_template("auth/change_password.html")
+
+		if not current_user.check_password(current_password):
+			flash("Current password is incorrect.", "danger")
+			return render_template("auth/change_password.html")
+
+		if new_password != confirm_password:
+			flash("New passwords do not match.", "danger")
+			return render_template("auth/change_password.html")
+
+		if len(new_password) < 6:
+			flash("New password must be at least 6 characters long.", "danger")
+			return render_template("auth/change_password.html")
+
+		current_user.set_password(new_password)
+		db.session.commit()
+		flash("Password changed successfully!", "success")
+		return redirect(url_for("auth.profile"))
+
+	return render_template("auth/change_password.html")
+
+
 @auth_bp.route("/forgot-password", methods=["GET", "POST"])
 def forgot_password():
 	if request.method == "POST":
