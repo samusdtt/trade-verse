@@ -9,7 +9,7 @@ class Config:
 	SECURITY_PASSWORD_SALT = os.getenv("SECURITY_PASSWORD_SALT", "dev-salt")
 
 	# Database
-	SQLITE_PATH = os.getenv("SQLITE_PATH", "/workspace/tradeverse.db")
+	SQLITE_PATH = os.getenv("SQLITE_PATH", "/tmp/tradeverse.db")
 	DATABASE_URL = os.getenv("DATABASE_URL")
 	# Database - use PostgreSQL if available, fallback to SQLite
 	if DATABASE_URL and DATABASE_URL.startswith('postgresql://'):
