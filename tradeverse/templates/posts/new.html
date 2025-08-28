@@ -19,6 +19,11 @@
 		<label class="form-label">Excerpt (optional)</label>
 		<input name="excerpt" class="form-control" maxlength="300" placeholder="Short summary shown on cards">
 	</div>
+	<div class="mb-3">
+		<label class="form-label">Tags (optional)</label>
+		<input name="tags" class="form-control" placeholder="Enter tags separated by commas (e.g., trading, strategy, psychology)">
+		<div class="form-text">Tags help others find your post</div>
+	</div>
 	<div class="mb-2">
 		<label class="form-label d-flex align-items-center justify-content-between">
 			<span>Content</span>
@@ -37,8 +42,32 @@
 			<input type="file" name="pdf" accept="application/pdf" class="form-control">
 		</div>
 	</div>
+	<div class="mb-3">
+		<label class="form-label">Status</label>
+		<select name="status" class="form-select" id="statusSelect" onchange="toggleScheduling()">
+			<option value="published">Publish Now</option>
+			<option value="draft">Save as Draft</option>
+			<option value="scheduled">Schedule for Later</option>
+		</select>
+	</div>
+	<div class="mb-3" id="schedulingDiv" style="display: none;">
+		<label class="form-label">Schedule Date & Time</label>
+		<input type="datetime-local" name="scheduled_at" class="form-control" id="scheduledAt">
+	</div>
+	<div class="mb-3">
+		<label class="form-label">Series (optional)</label>
+		<div class="row">
+			<div class="col-md-8">
+				<input name="series_name" class="form-control" placeholder="Series name">
+			</div>
+			<div class="col-md-4">
+				<input name="series_order" type="number" class="form-control" placeholder="Order (1, 2, 3...)" min="1">
+			</div>
+		</div>
+	</div>
 	<div class="mt-3">
-		<button class="btn btn-primary">Create</button>
+		<button class="btn btn-primary">Create Post</button>
+		<button type="button" class="btn btn-outline-secondary ms-2" onclick="saveAsDraft()">Save as Draft</button>
 	</div>
 </form>
 
@@ -93,6 +122,38 @@
 		form.addEventListener('submit', function(){
 			document.getElementById('contentHtml').value = quill.root.innerHTML;
 		});
+
+		function saveAsDraft() {
+			document.querySelector('select[name="status"]').value = 'draft';
+			document.getElementById('contentHtml').value = quill.root.innerHTML;
+			form.submit();
+		}
+
+		function toggleScheduling() {
+			const status = document.getElementById('statusSelect').value;
+			const schedulingDiv = document.getElementById('schedulingDiv');
+			const scheduledAt = document.getElementById('scheduledAt');
+			
+			if (status === 'scheduled') {
+				schedulingDiv.style.display = 'block';
+				scheduledAt.required = true;
+			} else {
+				schedulingDiv.style.display = 'none';
+				scheduledAt.required = false;
+			}
+		}
+
+		// Pre-fill form if using template
+		{% if template %}
+		document.addEventListener('DOMContentLoaded', function() {
+			document.querySelector('input[name="title"]').value = '{{ template.title_template or "" }}';
+			document.querySelector('input[name="tags"]').value = '{{ template.tags_template or "" }}';
+			{% if template.category_id %}
+			document.querySelector('select[name="category_id"]').value = '{{ template.category_id }}';
+			{% endif %}
+			quill.root.innerHTML = '{{ template.content_template or "" }}';
+		});
+		{% endif %}
 	})();
 </script>
 {% endblock %}

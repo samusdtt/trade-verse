@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Recommended Posts - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+	<h2 class="mb-4">Recommended for You</h2>
+	
+	{% if posts %}
+	<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+		{% for post in posts %}
+		<div class="col">
+			<div class="card h-100 card-hover">
+				{% if post.thumbnail_path %}
+				<img src="{{ url_for('static', filename=post.thumbnail_path) }}" class="card-thumb" alt="thumbnail">
+				{% else %}
+				<div class="default-thumb">
+					<i class="bi bi-file-text display-4"></i>
+				</div>
+				{% endif %}
+				<div class="card-body">
+					<div class="d-flex justify-content-between align-items-start mb-2">
+						<span class="badge bg-primary-soft">{{ post.category.name }}</span>
+						<small class="text-muted">{{ post.reading_time }} min read</small>
+					</div>
+					<h5 class="card-title">{{ post.title }}</h5>
+					{% if post.excerpt %}
+					<p class="card-text text-muted">{{ post.excerpt }}</p>
+					{% endif %}
+					<div class="d-flex justify-content-between align-items-center mt-3">
+						<div class="d-flex align-items-center">
+							<small class="text-muted me-3">
+								<i class="bi bi-eye"></i> {{ post.views_count }}
+							</small>
+							<small class="text-muted me-3">
+								<i class="bi bi-heart"></i> {{ post.likes_count }}
+							</small>
+							<small class="text-muted">
+								<i class="bi bi-chat"></i> {{ post.comments|length }}
+							</small>
+						</div>
+						<small class="text-muted">{{ post.created_at.strftime('%b %d') }}</small>
+					</div>
+				</div>
+				<div class="card-footer bg-transparent">
+					<div class="d-flex justify-content-between align-items-center">
+						<small class="text-muted">by {{ post.author.name or post.author.username }}</small>
+						<a href="{{ url_for('posts.detail', post_id=post.id) }}" class="btn btn-sm btn-primary">Read More</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		{% endfor %}
+	</div>
+	{% else %}
+	<div class="text-center py-5">
+		<i class="bi bi-lightbulb display-1 text-muted"></i>
+		<h4 class="mt-3">No Recommendations Yet</h4>
+		<p class="text-muted">Like some posts to get personalized recommendations.</p>
+		<a href="{{ url_for('main.index') }}" class="btn btn-primary">Explore Posts</a>
+	</div>
+	{% endif %}
+</div>
+{% endblock %}

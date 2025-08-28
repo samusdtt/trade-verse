@@ -43,6 +43,17 @@
 				</div>
 				<h2 class="h5 card-title"><a class="stretched-link text-decoration-none" href="{{ url_for('posts.detail', post_id=p.id) }}">{{ p.title }}</a></h2>
 				<p class="card-text text-muted">{{ p.excerpt or (p.content[:140] ~ '...') }}</p>
+				<div class="d-flex justify-content-between align-items-center mt-2">
+					<small class="text-muted">By {{ p.author.name or p.author.username }}</small>
+					<div class="d-flex align-items-center gap-2">
+						<small class="text-muted">
+							<i class="bi bi-heart"></i> {{ p.likes_count }}
+						</small>
+						<small class="text-muted">
+							<i class="bi bi-chat"></i> {{ p.comments|length }}
+						</small>
+					</div>
+				</div>
 			</div>
 		</article>
 	</div>

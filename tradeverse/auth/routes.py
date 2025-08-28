@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from ..extensions import db
-from ..models import User
+from ..models import User, Post, Bookmark
 from flask_mail import Message
 from .. import mail
 import secrets
@@ -26,11 +26,39 @@ def signup():
 			flash("Username or email already exists.", "warning")
 			return render_template("auth/signup.html")
 
-		user = User(username=username, email=email, name=full_name)
+		# Generate verification token
+		verification_token = secrets.token_urlsafe(32)
+		
+		user = User(username=username, email=email, name=full_name, email_verification_token=verification_token)
 		user.set_password(password)
 		db.session.add(user)
 		db.session.commit()
-		flash("Account created. Please log in.", "success")
+		
+		# Send verification email
+		try:
+			verify_url = url_for('auth.verify_email', token=verification_token, _external=True)
+			msg = Message(
+				"Verify Your Email - TradeVerse",
+				sender=current_app.config['MAIL_DEFAULT_SENDER'],
+				recipients=[email]
+			)
+			msg.body = f"""
+Hello {full_name or username},
+
+Welcome to TradeVerse! Please verify your email address by clicking the link below:
+
+{verify_url}
+
+If you didn't create this account, you can safely ignore this email.
+
+Best regards,
+TradeVerse Team
+"""
+			mail.send(msg)
+			flash("Account created! Please check your email to verify your account.", "success")
+		except Exception as e:
+			flash("Account created but verification email failed. Please contact support.", "warning")
+		
 		return redirect(url_for("auth.login"))
 
 	return render_template("auth/signup.html")
@@ -45,6 +73,11 @@ def login():
 		user = User.query.filter((User.username == identifier) | (User.email == identifier)).first()
 		if not user or not user.check_password(password):
 			flash("Invalid credentials.", "danger")
+			return render_template("auth/login.html")
+
+		# Check if email is verified
+		if not user.email_verified:
+			flash("Please verify your email before logging in. Check your inbox or request a new verification email.", "warning")
 			return render_template("auth/login.html")
 
 		login_user(user)
@@ -84,6 +117,60 @@ def profile():
 		return redirect(url_for("auth.profile"))
 
 	return render_template("auth/profile.html", user=current_user)
+
+
+@auth_bp.route("/dashboard")
+@login_required
+def dashboard():
+	# Get user's posts (published and drafts)
+	posts = Post.query.filter_by(user_id=current_user.id).order_by(Post.created_at.desc()).all()
+	
+	# Get user's bookmarks
+	bookmarks = Bookmark.query.filter_by(user_id=current_user.id).order_by(Bookmark.created_at.desc()).all()
+	bookmarked_posts = [bookmark.post for bookmark in bookmarks if bookmark.post]
+	
+	# Get user's followers and following
+	followers = current_user.followers.all()
+	following = current_user.following.all()
+	
+	return render_template("auth/dashboard.html", 
+		posts=posts, 
+		bookmarked_posts=bookmarked_posts,
+		followers=followers,
+		following=following
+	)
+
+
+@auth_bp.route("/change-password", methods=["GET", "POST"])
+@login_required
+def change_password():
+	if request.method == "POST":
+		current_password = request.form.get("current_password", "")
+		new_password = request.form.get("new_password", "")
+		confirm_password = request.form.get("confirm_password", "")
+
+		if not current_password or not new_password or not confirm_password:
+			flash("Please fill all fields.", "danger")
+			return render_template("auth/change_password.html")
+
+		if not current_user.check_password(current_password):
+			flash("Current password is incorrect.", "danger")
+			return render_template("auth/change_password.html")
+
+		if new_password != confirm_password:
+			flash("New passwords do not match.", "danger")
+			return render_template("auth/change_password.html")
+
+		if len(new_password) < 6:
+			flash("New password must be at least 6 characters long.", "danger")
+			return render_template("auth/change_password.html")
+
+		current_user.set_password(new_password)
+		db.session.commit()
+		flash("Password changed successfully!", "success")
+		return redirect(url_for("auth.profile"))
+
+	return render_template("auth/change_password.html")
 
 
 @auth_bp.route("/forgot-password", methods=["GET", "POST"])
@@ -132,3 +219,66 @@ TradeVerse Team
 		return render_template("auth/forgot_password.html")
 	
 	return render_template("auth/forgot_password.html")
+
+
+@auth_bp.route("/verify-email/<token>")
+def verify_email(token):
+	user = User.query.filter_by(email_verification_token=token).first()
+	
+	if user:
+		user.email_verified = True
+		user.email_verification_token = None  # Clear the token
+		db.session.commit()
+		flash("Email verified successfully! You can now log in.", "success")
+	else:
+		flash("Invalid or expired verification link.", "danger")
+	
+	return redirect(url_for("auth.login"))
+
+
+@auth_bp.route("/resend-verification", methods=["GET", "POST"])
+def resend_verification():
+	if request.method == "POST":
+		email = request.form.get("email", "").strip().lower()
+		
+		if not email:
+			flash("Please enter your email address.", "danger")
+			return render_template("auth/resend_verification.html")
+		
+		user = User.query.filter_by(email=email).first()
+		if user and not user.email_verified:
+			# Generate new verification token
+			verification_token = secrets.token_urlsafe(32)
+			user.email_verification_token = verification_token
+			db.session.commit()
+			
+			# Send new verification email
+			try:
+				verify_url = url_for('auth.verify_email', token=verification_token, _external=True)
+				msg = Message(
+					"Verify Your Email - TradeVerse",
+					sender=current_app.config['MAIL_DEFAULT_SENDER'],
+					recipients=[email]
+				)
+				msg.body = f"""
+Hello {user.name or user.username},
+
+Please verify your email address by clicking the link below:
+
+{verify_url}
+
+If you didn't request this, you can safely ignore this email.
+
+Best regards,
+TradeVerse Team
+"""
+				mail.send(msg)
+				flash("Verification email sent! Please check your inbox.", "success")
+			except Exception as e:
+				flash("Failed to send verification email. Please try again.", "danger")
+		else:
+			flash("Email not found or already verified.", "warning")
+		
+		return render_template("auth/resend_verification.html")
+	
+	return render_template("auth/resend_verification.html")
