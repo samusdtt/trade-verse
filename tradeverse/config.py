@@ -14,8 +14,7 @@ class Config:
 	SQLALCHEMY_DATABASE_URI = DATABASE_URL or f"sqlite:///{SQLITE_PATH}"
 	SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-	# Uploads (relative to static folder)
-	STATIC_ROOT = "/workspace/tradeverse/static"
+	# Uploads (relative paths under app.static_folder)
 	UPLOAD_FOLDER = "uploads"
 	UPLOAD_THUMBNAILS = "uploads/thumbnails"
 	UPLOAD_PDFS = "uploads/pdfs"
@@ -24,7 +23,7 @@ class Config:
 	ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif"}
 	ALLOWED_PDF_EXTENSIONS = {"pdf"}
 
-	# Mail (optional in dev)
+	# Mail (optional in prod)
 	MAIL_SERVER = os.getenv("MAIL_SERVER", "localhost")
 	MAIL_PORT = int(os.getenv("MAIL_PORT", "25"))
 	MAIL_USE_TLS = os.getenv("MAIL_USE_TLS", "false").lower() == "true"
