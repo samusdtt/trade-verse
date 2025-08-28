@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Post Analytics - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+	<h2 class="mb-4">Post Analytics</h2>
+	
+	<!-- Summary Cards -->
+	<div class="row row-cols-1 row-cols-md-4 g-3 mb-4">
+		<div class="col">
+			<div class="card text-center">
+				<div class="card-body">
+					<h3 class="text-primary">{{ total_posts }}</h3>
+					<p class="card-text">Total Posts</p>
+				</div>
+			</div>
+		</div>
+		<div class="col">
+			<div class="card text-center">
+				<div class="card-body">
+					<h3 class="text-success">{{ total_views }}</h3>
+					<p class="card-text">Total Views</p>
+				</div>
+			</div>
+		</div>
+		<div class="col">
+			<div class="card text-center">
+				<div class="card-body">
+					<h3 class="text-info">{{ total_likes }}</h3>
+					<p class="card-text">Total Likes</p>
+				</div>
+			</div>
+		</div>
+		<div class="col">
+			<div class="card text-center">
+				<div class="card-body">
+					<h3 class="text-warning">{{ total_comments }}</h3>
+					<p class="card-text">Total Comments</p>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Top Performing Posts -->
+	<div class="row">
+		<div class="col-lg-8">
+			<div class="card">
+				<div class="card-header">
+					<h5 class="mb-0">Top Performing Posts</h5>
+				</div>
+				<div class="card-body">
+					{% if top_posts %}
+					<div class="table-responsive">
+						<table class="table table-hover">
+							<thead>
+								<tr>
+									<th>Post</th>
+									<th>Views</th>
+									<th>Likes</th>
+									<th>Comments</th>
+									<th>Published</th>
+								</tr>
+							</thead>
+							<tbody>
+								{% for post in top_posts %}
+								<tr>
+									<td>
+										<a href="{{ url_for('posts.detail', post_id=post.id) }}" class="text-decoration-none">
+											{{ post.title[:50] }}{% if post.title|length > 50 %}...{% endif %}
+										</a>
+									</td>
+									<td>{{ post.views_count }}</td>
+									<td>{{ post.likes_count }}</td>
+									<td>{{ post.comments|length }}</td>
+									<td>{{ post.created_at.strftime('%b %d') }}</td>
+								</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+					</div>
+					{% else %}
+					<div class="text-center py-4">
+						<p class="text-muted">No posts yet. Start writing to see analytics!</p>
+					</div>
+					{% endif %}
+				</div>
+			</div>
+		</div>
+		
+		<div class="col-lg-4">
+			<div class="card">
+				<div class="card-header">
+					<h5 class="mb-0">Category Performance</h5>
+				</div>
+				<div class="card-body">
+					{% if category_stats %}
+					{% for stat in category_stats %}
+					<div class="d-flex justify-content-between align-items-center mb-2">
+						<span>{{ stat.category_name }}</span>
+						<span class="badge bg-primary">{{ stat.post_count }} posts</span>
+					</div>
+					<div class="progress mb-3" style="height: 6px;">
+						<div class="progress-bar" style="width: {{ (stat.post_count / total_posts * 100)|round(1) }}%"></div>
+					</div>
+					{% endfor %}
+					{% else %}
+					<p class="text-muted text-center">No category data yet.</p>
+					{% endif %}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}

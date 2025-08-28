@@ -142,3 +142,21 @@ class Follow(db.Model):
 	
 	def __repr__(self) -> str:
 		return f"<Follow {self.follower_id} -> {self.followed_id}>"
+
+
+class UserActivity(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+	activity_type = db.Column(db.String(50), nullable=False)  # post_created, post_liked, comment_added, etc.
+	description = db.Column(db.String(200), nullable=False)
+	related_post_id = db.Column(db.Integer, db.ForeignKey("post.id"), nullable=True)
+	related_user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+	created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+	
+	# Relationships
+	user = db.relationship("User", foreign_keys=[user_id], backref="activities")
+	related_post = db.relationship("Post", backref="activities")
+	related_user = db.relationship("User", foreign_keys=[related_user_id])
+	
+	def __repr__(self) -> str:
+		return f"<UserActivity {self.user_id} {self.activity_type}>"
