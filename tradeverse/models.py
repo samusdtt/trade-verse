@@ -160,3 +160,30 @@ class UserActivity(db.Model):
 	
 	def __repr__(self) -> str:
 		return f"<UserActivity {self.user_id} {self.activity_type}>"
+
+
+class ReadingList(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	name = db.Column(db.String(100), nullable=False)
+	description = db.Column(db.Text, nullable=True)
+	is_public = db.Column(db.Boolean, default=False)
+	created_by = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+	created_at = db.Column(db.DateTime, default=datetime.utcnow)
+	
+	# Relationships
+	user = db.relationship("User", backref="reading_lists")
+	posts = db.relationship("Post", secondary="reading_list_posts", backref="reading_lists")
+	
+	def __repr__(self) -> str:
+		return f"<ReadingList {self.name}>"
+
+
+class ReadingListPost(db.Model):
+	__tablename__ = "reading_list_posts"
+	id = db.Column(db.Integer, primary_key=True)
+	reading_list_id = db.Column(db.Integer, db.ForeignKey("reading_list.id"), nullable=False)
+	post_id = db.Column(db.Integer, db.ForeignKey("post.id"), nullable=False)
+	added_at = db.Column(db.DateTime, default=datetime.utcnow)
+	
+	# Ensure unique posts in each list
+	__table_args__ = (db.UniqueConstraint('reading_list_id', 'post_id', name='unique_reading_list_post'),)

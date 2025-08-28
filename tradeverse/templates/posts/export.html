@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Export Post - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+	<div class="row justify-content-center">
+		<div class="col-lg-8">
+			<div class="card">
+				<div class="card-header">
+					<h3 class="mb-0">Export Post: {{ post.title }}</h3>
+				</div>
+				<div class="card-body">
+					<div class="mb-4">
+						<h5>Export Options</h5>
+						<div class="row">
+							<div class="col-md-6">
+								<div class="card border-primary">
+									<div class="card-body text-center">
+										<i class="bi bi-file-text display-4 text-primary mb-3"></i>
+										<h5>HTML Export</h5>
+										<p class="text-muted">Download as HTML file with styling</p>
+										<a href="{{ url_for('posts.export_html', post_id=post.id) }}" class="btn btn-primary">
+											<i class="bi bi-download"></i> Export HTML
+										</a>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-6">
+								<div class="card border-success">
+									<div class="card-body text-center">
+										<i class="bi bi-file-pdf display-4 text-success mb-3"></i>
+										<h5>PDF Export</h5>
+										<p class="text-muted">Download as PDF document</p>
+										<a href="{{ url_for('posts.export_pdf', post_id=post.id) }}" class="btn btn-success">
+											<i class="bi bi-download"></i> Export PDF
+										</a>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					
+					<div class="mb-4">
+						<h5>Post Preview</h5>
+						<div class="border rounded p-3 bg-light">
+							<h4>{{ post.title }}</h4>
+							<p class="text-muted">
+								By {{ post.author.name or post.author.username }} • 
+								{{ post.created_at.strftime('%B %d, %Y') }} • 
+								{{ post.category.name }}
+							</p>
+							{% if post.excerpt %}
+							<p class="lead">{{ post.excerpt }}</p>
+							{% endif %}
+							<div class="content">
+								{{ post.content|embed_youtube|safe }}
+							</div>
+						</div>
+					</div>
+					
+					<div class="d-flex gap-2">
+						<a href="{{ url_for('posts.detail', post_id=post.id) }}" class="btn btn-outline-secondary">
+							<i class="bi bi-arrow-left"></i> Back to Post
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
