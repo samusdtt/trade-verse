@@ -42,6 +42,7 @@ def new_post():
 			content=content,
 			category_id=category_id,
 			excerpt=excerpt,
+			tags=tags,
 			thumbnail_path=thumbnail_path,
 			pdf_path=pdf_path,
 			user_id=current_user.id,
@@ -58,6 +59,12 @@ def new_post():
 @posts_bp.route("/<int:post_id>")
 def detail(post_id):
 	post = Post.query.get_or_404(post_id)
+	
+	# Increment view count (only for published posts)
+	if post.status == "published":
+		post.views_count += 1
+		db.session.commit()
+	
 	return render_template("posts/detail.html", post=post)
 
 

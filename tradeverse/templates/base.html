@@ -79,5 +79,40 @@
 	</footer>
 
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+	
+	<!-- Dark Mode Toggle Button -->
+	<button class="theme-toggle" onclick="toggleTheme()" id="themeToggle" title="Toggle Dark Mode">
+		<i class="bi bi-moon-fill" id="themeIcon"></i>
+	</button>
+	
+	<script>
+	// Dark mode functionality
+	function toggleTheme() {
+		const html = document.documentElement;
+		const themeIcon = document.getElementById('themeIcon');
+		const currentTheme = html.getAttribute('data-theme');
+		
+		if (currentTheme === 'dark') {
+			html.removeAttribute('data-theme');
+			themeIcon.className = 'bi bi-moon-fill';
+			localStorage.setItem('theme', 'light');
+		} else {
+			html.setAttribute('data-theme', 'dark');
+			themeIcon.className = 'bi bi-sun-fill';
+			localStorage.setItem('theme', 'dark');
+		}
+	}
+	
+	// Load saved theme
+	document.addEventListener('DOMContentLoaded', function() {
+		const savedTheme = localStorage.getItem('theme');
+		const themeIcon = document.getElementById('themeIcon');
+		
+		if (savedTheme === 'dark') {
+			document.documentElement.setAttribute('data-theme', 'dark');
+			themeIcon.className = 'bi bi-sun-fill';
+		}
+	});
+	</script>
 </body>
 </html>

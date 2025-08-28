@@ -23,6 +23,8 @@ class User(UserMixin, db.Model):
 	is_admin = db.Column(db.Boolean, default=False)
 	email_verified = db.Column(db.Boolean, default=False)
 	email_verification_token = db.Column(db.String(100), nullable=True)
+	badges = db.Column(db.String(500), nullable=True)  # Comma-separated badges
+	post_count = db.Column(db.Integer, default=0)
 	created_at = db.Column(db.DateTime, default=datetime.utcnow)
 	posts = db.relationship("Post", backref="author", lazy=True)
 	
@@ -48,12 +50,24 @@ class Post(db.Model):
 	pdf_path = db.Column(db.String(512), nullable=True)
 	status = db.Column(db.String(20), default="published")  # draft, published, scheduled
 	likes_count = db.Column(db.Integer, default=0)
+	views_count = db.Column(db.Integer, default=0)
+	tags = db.Column(db.String(500), nullable=True)  # Comma-separated tags
 	created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 	user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 	category_id = db.Column(db.Integer, db.ForeignKey("category.id"), nullable=False)
 
 	def __repr__(self) -> str:
 		return f"<Post {self.title[:20]}>"
+	
+	@property
+	def reading_time(self) -> int:
+		"""Calculate reading time in minutes"""
+		# Remove HTML tags and count words
+		import re
+		text = re.sub(r'<[^>]+>', '', self.content)
+		word_count = len(text.split())
+		# Average reading speed: 200 words per minute
+		return max(1, round(word_count / 200))
 
 
 class Comment(db.Model):

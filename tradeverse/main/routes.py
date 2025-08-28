@@ -20,7 +20,11 @@ def index():
 	if selected_category:
 		query = query.join(Category).filter(Category.name == selected_category)
 	if search_query:
-		query = query.filter(or_(Post.title.ilike(f"%{search_query}%"), Post.content.ilike(f"%{search_query}%")))
+		query = query.filter(or_(
+			Post.title.ilike(f"%{search_query}%"), 
+			Post.content.ilike(f"%{search_query}%"),
+			Post.tags.ilike(f"%{search_query}%")
+		))
 	query = query.order_by(Post.created_at.desc())
 	posts = query.all()
 	return render_template("index.html", categories=categories, selected_category=selected_category, q=search_query, posts=posts)
