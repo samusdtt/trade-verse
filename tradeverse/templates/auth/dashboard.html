@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container">
+	<div class="row">
+		<!-- Sidebar -->
+		<div class="col-md-3">
+			<div class="card mb-4">
+				<div class="card-body text-center">
+					<div class="mb-3">
+						<div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+							<span class="text-white fw-bold fs-4">{{ (current_user.name or current_user.username)[0].upper() }}</span>
+						</div>
+					</div>
+					<h5 class="card-title">{{ current_user.name or current_user.username }}</h5>
+					<p class="text-muted small">@{{ current_user.username }}</p>
+					{% if current_user.bio %}
+					<p class="card-text small">{{ current_user.bio }}</p>
+					{% endif %}
+					<div class="d-flex justify-content-around text-center">
+						<div>
+							<div class="fw-bold">{{ posts|length }}</div>
+							<small class="text-muted">Posts</small>
+						</div>
+						<div>
+							<div class="fw-bold">{{ followers|length }}</div>
+							<small class="text-muted">Followers</small>
+						</div>
+						<div>
+							<div class="fw-bold">{{ following|length }}</div>
+							<small class="text-muted">Following</small>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Main Content -->
+		<div class="col-md-9">
+			<!-- Navigation Tabs -->
+			<ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
+				<li class="nav-item" role="presentation">
+					<button class="nav-link active" id="posts-tab" data-bs-toggle="tab" data-bs-target="#posts" type="button" role="tab">
+						My Posts ({{ posts|length }})
+					</button>
+				</li>
+				<li class="nav-item" role="presentation">
+					<button class="nav-link" id="drafts-tab" data-bs-toggle="tab" data-bs-target="#drafts" type="button" role="tab">
+						Drafts ({{ posts|selectattr('status', 'equalto', 'draft')|list|length }})
+					</button>
+				</li>
+				<li class="nav-item" role="presentation">
+					<button class="nav-link" id="bookmarks-tab" data-bs-toggle="tab" data-bs-target="#bookmarks" type="button" role="tab">
+						Bookmarks ({{ bookmarked_posts|length }})
+					</button>
+				</li>
+			</ul>
+
+			<!-- Tab Content -->
+			<div class="tab-content" id="dashboardTabContent">
+				<!-- Published Posts -->
+				<div class="tab-pane fade show active" id="posts" role="tabpanel">
+					<div class="d-flex justify-content-between align-items-center mb-3">
+						<h4>Published Posts</h4>
+						<a href="{{ url_for('posts.new_post') }}" class="btn btn-primary btn-sm">New Post</a>
+					</div>
+					{% set published_posts = posts|selectattr('status', 'equalto', 'published')|list %}
+					{% if published_posts %}
+					<div class="row row-cols-1 row-cols-md-2 g-3">
+						{% for post in published_posts %}
+						<div class="col">
+							<div class="card h-100">
+								{% if post.thumbnail_path %}
+								<img src="{{ url_for('static', filename=post.thumbnail_path) }}" class="card-img-top" style="height: 150px; object-fit: cover;" alt="thumbnail">
+								{% endif %}
+								<div class="card-body">
+									<h6 class="card-title">{{ post.title }}</h6>
+									<p class="card-text small text-muted">{{ post.created_at.strftime('%b %d, %Y') }}</p>
+									<div class="d-flex justify-content-between align-items-center">
+										<small class="text-muted">
+											<i class="bi bi-heart"></i> {{ post.likes_count }}
+											<i class="bi bi-chat ms-2"></i> {{ post.comments|length }}
+										</small>
+										<a href="{{ url_for('posts.detail', post_id=post.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+									</div>
+								</div>
+							</div>
+						</div>
+						{% endfor %}
+					</div>
+					{% else %}
+					<div class="text-center py-5">
+						<p class="text-muted">No published posts yet.</p>
+						<a href="{{ url_for('posts.new_post') }}" class="btn btn-primary">Create Your First Post</a>
+					</div>
+					{% endif %}
+				</div>
+
+				<!-- Drafts -->
+				<div class="tab-pane fade" id="drafts" role="tabpanel">
+					<div class="d-flex justify-content-between align-items-center mb-3">
+						<h4>Drafts</h4>
+						<a href="{{ url_for('posts.new_post') }}" class="btn btn-primary btn-sm">New Post</a>
+					</div>
+					{% set draft_posts = posts|selectattr('status', 'equalto', 'draft')|list %}
+					{% if draft_posts %}
+					<div class="row row-cols-1 row-cols-md-2 g-3">
+						{% for post in draft_posts %}
+						<div class="col">
+							<div class="card h-100">
+								{% if post.thumbnail_path %}
+								<img src="{{ url_for('static', filename=post.thumbnail_path) }}" class="card-img-top" style="height: 150px; object-fit: cover;" alt="thumbnail">
+								{% endif %}
+								<div class="card-body">
+									<h6 class="card-title">{{ post.title }}</h6>
+									<p class="card-text small text-muted">Draft • {{ post.created_at.strftime('%b %d, %Y') }}</p>
+									<div class="d-flex gap-2">
+										<a href="{{ url_for('posts.edit_post', post_id=post.id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+										<a href="{{ url_for('posts.detail', post_id=post.id) }}" class="btn btn-sm btn-outline-secondary">Preview</a>
+									</div>
+								</div>
+							</div>
+						</div>
+						{% endfor %}
+					</div>
+					{% else %}
+					<div class="text-center py-5">
+						<p class="text-muted">No drafts yet.</p>
+						<a href="{{ url_for('posts.new_post') }}" class="btn btn-primary">Create a Draft</a>
+					</div>
+					{% endif %}
+				</div>
+
+				<!-- Bookmarks -->
+				<div class="tab-pane fade" id="bookmarks" role="tabpanel">
+					<h4>Bookmarked Posts</h4>
+					{% if bookmarked_posts %}
+					<div class="row row-cols-1 row-cols-md-2 g-3">
+						{% for post in bookmarked_posts %}
+						<div class="col">
+							<div class="card h-100">
+								{% if post.thumbnail_path %}
+								<img src="{{ url_for('static', filename=post.thumbnail_path) }}" class="card-img-top" style="height: 150px; object-fit: cover;" alt="thumbnail">
+								{% endif %}
+								<div class="card-body">
+									<h6 class="card-title">{{ post.title }}</h6>
+									<p class="card-text small text-muted">
+										By {{ post.author.name or post.author.username }} • {{ post.created_at.strftime('%b %d, %Y') }}
+									</p>
+									<div class="d-flex justify-content-between align-items-center">
+										<small class="text-muted">
+											<i class="bi bi-heart"></i> {{ post.likes_count }}
+											<i class="bi bi-chat ms-2"></i> {{ post.comments|length }}
+										</small>
+										<a href="{{ url_for('posts.detail', post_id=post.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+									</div>
+								</div>
+							</div>
+						</div>
+						{% endfor %}
+					</div>
+					{% else %}
+					<div class="text-center py-5">
+						<p class="text-muted">No bookmarked posts yet.</p>
+						<a href="{{ url_for('main.index') }}" class="btn btn-primary">Explore Posts</a>
+					</div>
+					{% endif %}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
