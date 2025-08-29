@@ -15,11 +15,12 @@ def index():
 	query = Post.query.options(joinedload(Post.category), joinedload(Post.author))
 	
 	# Only show published posts
-	# Show published posts and scheduled posts that are due
+	# Show published posts and scheduled posts that are due (only public posts)
 	from datetime import datetime
 	query = query.filter(
-		(Post.status == "published") | 
-		((Post.status == "scheduled") & (Post.scheduled_at <= datetime.utcnow()))
+		((Post.status == "published") | 
+		((Post.status == "scheduled") & (Post.scheduled_at <= datetime.utcnow()))) &
+		(Post.is_public == True)
 	)
 	
 	if selected_category:

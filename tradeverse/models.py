@@ -66,6 +66,7 @@ class Post(db.Model):
 	thumbnail_path = db.Column(db.String(512), nullable=True)
 	pdf_path = db.Column(db.String(512), nullable=True)
 	status = db.Column(db.String(20), default="published")  # draft, published, scheduled
+	is_public = db.Column(db.Boolean, default=True)  # public or private post
 	likes_count = db.Column(db.Integer, default=0)
 	scheduled_at = db.Column(db.DateTime, nullable=True)  # For scheduled posts
 	views_count = db.Column(db.Integer, default=0)

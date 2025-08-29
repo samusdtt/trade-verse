@@ -66,6 +66,7 @@ def new_post():
 			pdf_path=pdf_path,
 			user_id=current_user.id,
 			status=status,
+			is_public=is_public,
 			series_name=series_name if series_name else None,
 			series_order=int(series_order) if series_order else None,
 			scheduled_at=scheduled_datetime

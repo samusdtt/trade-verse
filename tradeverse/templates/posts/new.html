@@ -50,6 +50,15 @@
 			<option value="scheduled">Schedule for Later</option>
 		</select>
 	</div>
+	<div class="mb-3">
+		<div class="form-check">
+			<input name="is_public" type="checkbox" class="form-check-input" id="isPublic" checked>
+			<label class="form-check-label" for="isPublic">
+				Make this post public (visible to everyone)
+			</label>
+		</div>
+		<div class="form-text">Uncheck to make this post private (only you can see it)</div>
+	</div>
 	<div class="mb-3" id="schedulingDiv" style="display: none;">
 		<label class="form-label">Schedule Date & Time</label>
 		<input type="datetime-local" name="scheduled_at" class="form-control" id="scheduledAt">

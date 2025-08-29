@@ -10,6 +10,9 @@
 					• {{ post.category.name }} • {{ post.created_at.strftime('%b %d, %Y') }}
 					• <i class="bi bi-eye"></i> {{ post.views_count }} views
 					• <i class="bi bi-clock"></i> {{ post.reading_time }} min read
+					{% if not post.is_public %}
+					• <span class="badge bg-warning text-dark">Private</span>
+					{% endif %}
 				</div>
 			</div>
 			{% if current_user.is_authenticated and (current_user.is_admin or current_user.id == post.user_id) %}
