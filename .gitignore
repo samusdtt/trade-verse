@@ -30,4 +30,4 @@ tradeverse/static/uploads/*
 !tradeverse/static/uploads/.gitkeep
 !tradeverse/static/uploads/pdfs/.gitkeep
 !tradeverse/static/uploads/thumbnails/.gitkeep
-!tradeverse/static/uploads/content-images/.gitkeep
+!tradeverse/static/uploads/content-images/.gitkeepcore
